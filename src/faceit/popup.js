@@ -1,3 +1,11 @@
+async function exec(args, func) {
+    chrome.scripting.executeScript({
+        target: {tabId: (await chrome.tabs.query({active: true, currentWindow: true}))[0].id},
+        func: func,
+        args: args
+    });
+}
+
 class TeamWinRateCalculator {
     constructor(apiKey) {
         this.apiKey = apiKey;
@@ -119,10 +127,9 @@ class TeamWinRateCalculator {
     }
 
     async displayWinRates(team1WinRate, team2WinRate) {
-        let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-        chrome.scripting.executeScript({
-            target: {tabId: tab.id},
-            func: (team1WinRate, team2WinRate) => {
+        exec(
+            [team1WinRate, team2WinRate],
+            (team1WinRate, team2WinRate) => {
                 let info = document.querySelector('[class*="Overview__Column"][name="info"]');
                 console.log(info)
                 // Проверяем, найден ли элемент
@@ -134,18 +141,16 @@ class TeamWinRateCalculator {
                 const winRateElement = document.createElement('div');
                 winRateElement.style.marginTop = '10px';
                 winRateElement.innerHTML = `
-        <h4>Проценты побед:</h4>
-        <p>Команда 1: ${team1WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team1WinRate.totalGames})</p>
-        <p>Команда 2: ${team2WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team2WinRate.totalGames})</p>
-    `;
+                    <h4>Проценты побед:</h4>
+                    <p>Команда 1: ${team1WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team1WinRate.totalGames})</p>
+                    <p>Команда 2: ${team2WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team2WinRate.totalGames})</p>
+                `;
 
                 // Теперь безопасно добавляем элемент в целевой элемент
                 info.appendChild(winRateElement);
                 console.log("Данные успешно добавлены к элементу.");
-            },
-            args: [team1WinRate, team2WinRate]
-        });
-
+            }
+        )
 
 
     }
