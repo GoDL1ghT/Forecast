@@ -1,0 +1,140 @@
+/* Global Styles */
+body {
+    background-color: #2b2b2b; /* Dark gray background */
+    color: #ffffff; /* White text for contrast */
+    font-family: 'Arial', sans-serif; /* Clean font */
+    padding: 20px; /* Padding around the body */
+    margin: 0; /* Remove default margin */
+}
+
+/* Container Styles */
+.container {
+    border: 2px solid #ff4500; /* Orange border */
+    border-radius: 15px; /* Rounded corners for container */
+    padding: 20px; /* Increased padding for more space */
+    width: 400px; /* Fixed width of popup */
+    height: auto; /* Auto height to fit content */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow effect */
+}
+
+/* Header Styles */
+h1 {
+    color: #ff4500; /* Coral orange for headings */
+    text-align: center; /* Center the heading */
+    margin-bottom: 20px; /* Space below the heading */
+}
+
+/* Setting Item Styles */
+.setting-item {
+    margin: 15px 0; /* Space between each setting */
+    display: flex; /* Flexbox for alignment */
+    align-items: center; /* Center vertically */
+    justify-content: space-between; /* Space between label and switch */
+}
+
+/* Label Styles */
+label {
+    margin-bottom: 5px; /* Space below labels */
+    font-size: 16px; /* Slightly larger font for labels */
+}
+
+/* Input Field Styles */
+input[type="text"] {
+    width: 100%; /* Full width input */
+    padding: 10px; /* Padding inside input */
+    border: 1px solid #ff4500; /* Orange border */
+    border-radius: 5px; /* Rounded corners for input */
+    background-color: #333333; /* Darker gray for input background */
+    color: #ffffff; /* White text for input */
+    transition: border-color 0.3s; /* Transition for border color */
+}
+
+/* Focus State for Input */
+input[type="text"]:focus {
+    border-color: #ff8800; /* Brighter orange on focus */
+    outline: none; /* Remove outline */
+}
+
+/* Button Styles */
+button {
+    background-color: #ff4500; /* Coral orange for button */
+    color: #ffffff; /* White text for button */
+    padding: 10px 15px; /* Padding for button */
+    border: none; /* Remove border */
+    border-radius: 5px; /* Rounded corners for button */
+    cursor: pointer; /* Pointer cursor for button */
+    font-size: 16px; /* Larger font for button */
+    margin-top: 10px; /* Space above button */
+    transition: background-color 0.3s; /* Transition for background color */
+    display: block; /* Block display for button */
+    width: 100%; /* Full width button */
+}
+
+/* Button Hover Effect */
+button:hover {
+    background-color: #a33507; /* Darker orange on hover */
+}
+
+/* Styling for the toggle switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px; /* Width of toggle */
+    height: 34px; /* Height of toggle */
+}
+
+.switch input {
+    opacity: 0; /* Hide the default checkbox */
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc; /* Gray background */
+    transition: .4s; /* Transition effect */
+    border-radius: 34px; /* Rounded edges */
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px; /* Height of toggle knob */
+    width: 26px; /* Width of toggle knob */
+    left: 4px; /* Space from left */
+    bottom: 4px; /* Space from bottom */
+    background-color: white; /* White toggle knob */
+    transition: .4s; /* Transition effect */
+    border-radius: 50%; /* Round toggle knob */
+}
+
+/* Toggle Checked Styles */
+input:checked + .slider {
+    background-color: #ff4500; /* Change background when checked */
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px); /* Move knob to the right */
+}
+
+/* Save Message Styles */
+.save-message {
+    display: none; /* Hidden by default */
+    background-color: #4caf50; /* Green background */
+    color: white;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    text-align: center;
+    transition: opacity 0.5s; /* Fade in/out */
+}
+
+/* Show Class for Save Message */
+.save-message.show {
+    display: block; /* Show the message */
+}

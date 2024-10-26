@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+    <h1>Настройки</h1>
+    <div class="settings-box">
+        <div class="setting-item">
+            <label for="toggleExtension">Статус расширения:</label>
+            <label class="switch">
+                <input type="checkbox" id="toggleExtension">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <label for="apiKeyInput">API Key:</label>
+            <input type="text" id="apiKeyInput" placeholder="API Key"/>
+        </div>
+        <button id="saveSettings">Сохранить</button>
+        <div id="matchStats"></div>
+        <div id="saveMessage" class="save-message">Настройки сохранены!</div>
+    </div>
+</div>
+<script src="/src/faceit/popup.js"></script>
+</body>
+</html>
