@@ -5,7 +5,9 @@
   "description": "Отображает процент победы на картах в меню комнаты Faceit",
   "permissions": [
     "storage",
-    "tabs"
+    "tabs",
+    "scripting",
+    "activeTab"
   ],
   "background": {
     "service_worker": "src/faceit/background.js"
@@ -24,7 +26,11 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/faceit/content.js", "src/faceit/popup.js"]
+      "js": ["src/faceit/content.js"]
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/faceit/popup.js"]
     }
   ]
 }

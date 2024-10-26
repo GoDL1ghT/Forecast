@@ -118,29 +118,36 @@ class TeamWinRateCalculator {
         };
     }
 
-    displayWinRates(team1WinRate, team2WinRate) {
-        // Ищем целевой элемент
-        // let info = document.querySelector('[class*="Overview__Column"][name="info"]');
-        let selector = "#MATCHROOM-OVERVIEW-qICZPRMrBnzXTDOQvdEMo > div.Overview__BrandingContainer-sc-1aec568f-1.hdvPZE > div > div.Overview__Column-sc-1aec568f-4.caCwWw > div.Overview__Stack-sc-1aec568f-5.jPAgTv"
-        let info = document.querySelector(selector);
+    async displayWinRates(team1WinRate, team2WinRate) {
+        let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+        chrome.scripting.executeScript({
+            target: {tabId: tab.id},
+            func: (team1WinRate, team2WinRate) => {
+                let info = document.querySelector('[class*="Overview__Column"][name="info"]');
+                console.log(info)
+                // Проверяем, найден ли элемент
+                if (info == null) {
+                    console.warn("Целевой элемент не найден. Проверьте, существует ли он на странице.");
+                    return; // Прерываем выполнение, если элемент не найден
+                }
 
-        // Проверяем, найден ли элемент
-        if (info == null) {
-            console.warn("Целевой элемент не найден. Проверьте, существует ли он на странице.");
-            return; // Прерываем выполнение, если элемент не найден
-        }
-
-        const winRateElement = document.createElement('div');
-        winRateElement.style.marginTop = '10px';
-        winRateElement.innerHTML = `
+                const winRateElement = document.createElement('div');
+                winRateElement.style.marginTop = '10px';
+                winRateElement.innerHTML = `
         <h4>Проценты побед:</h4>
         <p>Команда 1: ${team1WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team1WinRate.totalGames})</p>
         <p>Команда 2: ${team2WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team2WinRate.totalGames})</p>
     `;
 
-        // Теперь безопасно добавляем элемент в целевой элемент
-        info.appendChild(winRateElement);
-        console.log("Данные успешно добавлены к элементу.");
+                // Теперь безопасно добавляем элемент в целевой элемент
+                info.appendChild(winRateElement);
+                console.log("Данные успешно добавлены к элементу.");
+            },
+            args: [team1WinRate, team2WinRate]
+        });
+
+
+
     }
 
 
