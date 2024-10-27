@@ -6,7 +6,7 @@ async function initialize() {
     const apiKey = await getApiKey();
 
     if (apiKey) {
-        const matchId = window.location.href.split("/").pop();//await getMatchIdFromActiveTab();
+        const matchId = window.location.href.split("/").pop();
 
         if (!matchId) {
             console.log("Не удалось получить ID матча. Убедитесь, что вы на странице матча.");
@@ -49,25 +49,19 @@ class TeamWinRateCalculator {
 
     async insertHtmlFromFileByName(filePath, targetElementName) {
         try {
-            // Получаем URL файла HTML с помощью chrome.runtime.getURL
             const response = await fetch(chrome.runtime.getURL(filePath));
 
-            // Проверяем успешность ответа
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Получаем текст содержимого HTML файла
             const htmlContent = await response.text();
-            // Находим элемент с указанным именем
             const targetElement = document.querySelector(`[name="${targetElementName}"]`);
 
             if (targetElement) {
-                // Находим первый элемент с классом внутри целевого элемента
-                const firstChildWithClass = targetElement.querySelector('[class]'); // Замените 'your-class-name' на имя нужного класса
+                const firstChildWithClass = targetElement.querySelector('[class]');
 
                 if (firstChildWithClass) {
-                    // Вставляем HTML-контент после первого найденного элемента с классом
                     firstChildWithClass.insertAdjacentHTML('afterend', htmlContent);
                 } else {
                     console.error(`No child with the specified class found inside the element with name "${targetElementName}".`);
@@ -83,14 +77,11 @@ class TeamWinRateCalculator {
     async printResults() {
         await this.insertHtmlFromFileByName('src/visual/tables/team.html', 'info')
         this.results.forEach((teamMap, teamName) => {
-            console.log(`\nTeam: ${teamName}`);
             const teamMatches = this.aggregateTeamMatches(teamMap);
             this.printTeamMatches(teamName, teamMatches);
             this.printPlayersStats(teamMap);
         });
     }
-
-
 
     aggregateTeamMatches(teamMap) {
         const teamMatches = {};
@@ -109,7 +100,6 @@ class TeamWinRateCalculator {
     }
 
     printTeamMatches(teamNameRaw, teamMatches) {
-        console.log("\nTeam Matches");
         const roster = teamNameRaw.split("$").pop()
         const teamName = teamNameRaw.split("$")[0]
         addTableTeamTitle(roster,teamName);
@@ -117,7 +107,6 @@ class TeamWinRateCalculator {
             .sort(([, dataA], [, dataB]) => dataB.wins / dataB.totalGames - dataA.wins / dataA.totalGames)
             .forEach(([mapName, data]) => {
                 const winrate = (data.wins / data.totalGames * 100).toFixed(0);
-                console.log(`  ${mapName} - Games: ${data.totalGames}, Wins: ${data.wins}, Winrate: ${winrate}%`);
                 addRow(roster,mapName, data.totalGames, winrate)
             });
     }
@@ -168,7 +157,7 @@ class TeamWinRateCalculator {
         const data = await response.json();
 
         if (!data.items || data.items.length === 0) {
-            return; // Выход, если нет данных
+            return;
         }
 
         if (!this.results.has(team)) {
