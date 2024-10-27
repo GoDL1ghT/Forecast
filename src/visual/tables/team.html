@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .background-table {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px; /* Отступы для области с таблицами */
+            background: transparent; /* Прозрачный фон */
+        }
+
+        .team-container {
+            width: 48%; /* Каждая команда занимает 48% от контейнера */
+            display: flex;
+            flex-direction: column; /* Вертикальное расположение */
+            align-items: center; /* Центрирование содержимого */
+            position: relative; /* Для позиционирования элементов внутри */
+        }
+
+        #roster1, #roster2 {
+            width: 100%; /* Таблицы занимают всю ширину контейнера */
+            background: rgb(28, 28, 28); /* Цвет фона таблиц */
+            border-radius: 8px; /* Скругленные углы для таблиц */
+            border-collapse: collapse; /* Убираем разделения между ячейками */
+            overflow: hidden; /* Убираем лишние скругления */
+            position: relative; /* Для управления наложением */
+        }
+
+        .team-name {
+            display: inline-block; /* Позволяет боксу адаптироваться к содержимому */
+            text-align: center; /* Центрирование текста */
+            background: rgb(37, 37, 37); /* Цвет фона для вкладыша */
+            color: white; /* Цвет текста */
+            border-radius: 8px 8px 0 0; /* Скругленные верхние углы */
+            padding: 10px 20px; /* Внутренний отступ */
+            font-weight: bold; /* Жирный шрифт для имени команды */
+            margin: 0; /* Убираем внешние отступы */
+            z-index: 2; /* Убедитесь, что этот элемент будет выше таблицы */
+            position: relative; /* Чтобы свечение не заходило на таблицу */
+        }
+
+        th, td {
+            border: none; /* Убираем границы ячеек */
+            text-align: center; /* Выравнивание текста по центру */
+            color: white; /* Цвет текста */
+            padding: 10px; /* Внутренний отступ для удобства */
+            background: transparent; /* Прозрачный фон ячеек */
+            box-shadow: none; /* Убираем свечение у ячеек */
+        }
+
+        th {
+            position: relative; /* Позиционирование для рамки */
+            background-color: rgb(37, 37, 37); /* Фон для заголовков */
+        }
+
+        td {
+            vertical-align: middle; /* Вертикальное выравнивание по центру */
+        }
+    </style>
+
+
+    <title></title>
+</head>
+<body>
+<div class="background-table">
+    <div class="team-container">
+        <div class="team-name" id="roster1-name"></div>
+        <table id="roster1">
+            <thead>
+            <tr>
+                <th>Карта</th>
+                <th>Игр</th>
+                <th>Винрейт</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="team-container">
+        <div class="team-name" id="roster2-name"></div>
+        <table id="roster2">
+            <thead>
+            <tr>
+                <th>Карта</th>
+                <th>Игр</th>
+                <th>Винрейт</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

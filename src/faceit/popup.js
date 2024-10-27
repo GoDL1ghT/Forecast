@@ -1,154 +1,27 @@
-async function exec(args, func) {
-    chrome.scripting.executeScript({
-        target: {tabId: (await chrome.tabs.query({active: true, currentWindow: true}))[0].id},
-        func: func,
-        args: args
-    });
-}
-
-class TeamWinRateCalculator {
-    constructor(apiKey) {
-        this.apiKey = apiKey;
-        this.baseUrl = "https://open.faceit.com/data/v4";
-    }
-
-    async fetchMatchStats(matchId) {
-        const url = `${this.baseUrl}/matches/${matchId}`;
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${this.apiKey}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Ошибка при получении статистики матча: ${response.statusText}`);
-        }
-
-        return await response.json();
-    }
-
-    async fetchPlayerStats(playerId) {
-        const url = `${this.baseUrl}/players/${playerId}/games/cs2/stats`;
-        const params = new URLSearchParams({ limit: 100 });
-
-        try {
-            const response = await fetch(`${url}?${params.toString()}`, {
-                headers: {
-                    'Authorization': `Bearer ${this.apiKey}`
-                }
-            });
-
-            if (!response.ok) {
-                const errorDetails = await response.json();
-                console.error(`Ошибка при получении статистики игрока с ID ${playerId}: ${errorDetails.message}`);
-                throw new Error(`Ошибка: ${errorDetails.message}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error(`Ошибка при выполнении запроса для игрока с ID ${playerId}: ${error.message}`);
-        }
-    }
 
 
-    async getMatchWinRates(matchId) {
-        if (!matchId) {
-            throw new Error("Match ID is not provided.");
-        }
-
-        try {
-            const matchStats = await this.fetchMatchStats(matchId);
-
-            if (!matchStats || !matchStats.match_id) {
-                console.error("Invalid match stats structure:", matchStats);
-                throw new Error("Invalid match stats structure.");
-            }
-
-            await this.displayWinRates(matchStats);
-        } catch (error) {
-            console.error("Ошибка при получении статистики матча:", error.message);
-        }
-    }
-
-    async calculateTeamAverageWinRate(teamStats) {
-        const totalWinRates = {};
-        const totalGames = {};
-
-        if (!teamStats || !teamStats.players || !Array.isArray(teamStats.players)) {
-            console.warn("Команда не найдена или не содержит игроков:", teamStats);
-            return totalWinRates; // Возвращаем пустой объект, если команда не найдена
-        }
-
-        const playerStatsPromises = teamStats.players.map(async (player) => {
-            try {
-                return await this.fetchPlayerStats(player.player_id);
-            } catch (error) {
-                console.warn(`Не удалось получить статистику для игрока с ID ${player.player_id}: ${error.message}`);
-                return null; // Возвращаем null в случае ошибки
-            }
-        });
-
-        const playerStatsArray = await Promise.all(playerStatsPromises);
-
-        for (const playerStats of playerStatsArray) {
-            if (!playerStats) continue; // Пропускаем, если данных нет
-
-            if (!playerStats.items || !Array.isArray(playerStats.items)) {
-                console.warn("Нет данных о матчах для игрока:", playerStats);
-                continue; // Пропускаем, если данных нет
-            }
-
-            let wins = 0;
-            let games = playerStats.items.length;
-
-            for (const match of playerStats.items) {
-                if (match.winner === playerStats.player_id) {
-                    wins++;
-                }
-            }
-
-            totalWinRates[playerStats.player_id] = (wins / games) * 100; // Процент побед
-            totalGames[playerStats.player_id] = games; // Общее количество игр
-        }
-
-        const totalWinRate = Object.values(totalWinRates).reduce((acc, rate) => acc + rate, 0);
-        const teamAverageWinRate = totalWinRate / Object.keys(totalWinRates).length;
-
-        return {
-            teamAverageWinRate,
-            totalGames: Object.values(totalGames).reduce((a, b) => a + b, 0) // Общее количество игр по всем игрокам
-        };
-    }
-
-    async displayWinRates(matchStats) {
-        // exec([matchStats], (matchStats) => {
-            console.log(matchStats);
-        // })
-
-        // exec(
-        //     [team1WinRate, team2WinRate],
-        //     (team1WinRate, team2WinRate) => {
-        //         let info = document.querySelector('[class*="Overview__Column"][name="info"]');
-        //
-        //         if (info == null) {
-        //             console.warn("Целевой элемент не найден. Проверьте, существует ли он на странице.");
-        //             return;
-        //         }
-        //
-        //         const winRateElement = document.createElement('div');
-        //         winRateElement.style.marginTop = '10px';
-        //         winRateElement.innerHTML = `
-        //             <h4>Проценты побед:</h4>
-        //             <p>Команда 1: ${team1WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team1WinRate.totalGames})</p>
-        //             <p>Команда 2: ${team2WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team2WinRate.totalGames})</p>
-        //         `;
-        //
-        //         info.appendChild(winRateElement);
-        //         console.log("Данные успешно добавлены к элементу.");
-        //     }
-        // )
-    }
-}
+// exec(
+//     [team1WinRate, team2WinRate],
+//     (team1WinRate, team2WinRate) => {
+//         let info = document.querySelector('[class*="Overview__Column"][name="info"]');
+//
+//         if (info == null) {
+//             console.warn("Целевой элемент не найден. Проверьте, существует ли он на странице.");
+//             return;
+//         }
+//
+//         const winRateElement = document.createElement('div');
+//         winRateElement.style.marginTop = '10px';
+//         winRateElement.innerHTML = `
+//             <h4>Проценты побед:</h4>
+//             <p>Команда 1: ${team1WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team1WinRate.totalGames})</p>
+//             <p>Команда 2: ${team2WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team2WinRate.totalGames})</p>
+//         `;
+//
+//         info.appendChild(winRateElement);
+//         console.log("Данные успешно добавлены к элементу.");
+//     }
+// )
 
 // Получение API ключа из настроек
 async function getApiKey() {
@@ -184,31 +57,6 @@ async function popupLoad() {
     }
 }
 
-// Инициализация и загрузка настроек
-async function initialize() {
-    const enabled = await isExtensionEnabled();
-    if (!enabled) return;
-    const apiKey = await getApiKey();
-
-    if (apiKey) {
-        const matchId = window.location.href.split("/").pop();//await getMatchIdFromActiveTab();
-
-        if (!matchId) {
-            document.getElementById("matchStats").innerText = "Не удалось получить ID матча. Убедитесь, что вы на странице матча.";
-            return;
-        }
-
-        const calculator = new TeamWinRateCalculator(apiKey);
-
-        try {
-            await calculator.getMatchWinRates(matchId);
-        } catch (error) {
-            document.getElementById("matchStats").innerText = "Ошибка при получении статистики матча: " + error.message;
-        }
-    } else {
-        document.getElementById("matchStats").innerText = "Пожалуйста, введите ваш API Key в настройках!";
-    }
-}
 
 // Загрузка настроек при открытии popup
 async function loadSettings() {
