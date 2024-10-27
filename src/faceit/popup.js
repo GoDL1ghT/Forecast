@@ -29,8 +29,10 @@ class TeamWinRateCalculator {
 
     async fetchPlayerStats(playerId) {
         const url = `${this.baseUrl}/players/${playerId}/games/cs2/stats`;
+        const params = new URLSearchParams({ limit: 100 });
+
         try {
-            const response = await fetch(url, {
+            const response = await fetch(`${url}?${params.toString()}`, {
                 headers: {
                     'Authorization': `Bearer ${this.apiKey}`
                 }
@@ -70,7 +72,7 @@ class TeamWinRateCalculator {
                 return;
             }
 
-            this.displayWinRates(team1WinRate, team2WinRate);
+            await this.displayWinRates(team1WinRate, team2WinRate);
         } catch (error) {
             console.error("Ошибка при получении статистики матча:", error.message);
         }
@@ -131,11 +133,10 @@ class TeamWinRateCalculator {
             [team1WinRate, team2WinRate],
             (team1WinRate, team2WinRate) => {
                 let info = document.querySelector('[class*="Overview__Column"][name="info"]');
-                console.log(info)
-                // Проверяем, найден ли элемент
+
                 if (info == null) {
                     console.warn("Целевой элемент не найден. Проверьте, существует ли он на странице.");
-                    return; // Прерываем выполнение, если элемент не найден
+                    return;
                 }
 
                 const winRateElement = document.createElement('div');
@@ -146,16 +147,11 @@ class TeamWinRateCalculator {
                     <p>Команда 2: ${team2WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team2WinRate.totalGames})</p>
                 `;
 
-                // Теперь безопасно добавляем элемент в целевой элемент
                 info.appendChild(winRateElement);
                 console.log("Данные успешно добавлены к элементу.");
             }
         )
-
-
     }
-
-
 }
 
 // Получение API ключа из настроек
@@ -204,11 +200,9 @@ async function initialize() {
         }
 
         const calculator = new TeamWinRateCalculator(apiKey);
-        try {
-            setTimeout(() => {
-                calculator.getMatchWinRates(matchId);
-            }, 3000);
 
+        try {
+            await calculator.getMatchWinRates(matchId);
         } catch (error) {
             document.getElementById("matchStats").innerText = "Ошибка при получении статистики матча: " + error.message;
         }
