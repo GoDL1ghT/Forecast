@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Map Wins Display",
+  "name": "FACEIT Forecast",
   "version": "1.0",
-  "description": "Отображает процент победы на картах в меню комнаты Faceit",
+  "description": "Удобное расширение для подробной статистики на Faceit",
   "permissions": [
     "storage",
     "tabs",
@@ -14,14 +14,13 @@
   },
   "action": {
     "default_popup": "src/visual/popup.html",
-    "default_icon": "src/icons/icon128.png"
+    "default_icon": "src/icons/logo.png"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self';"
   },
   "icons": {
-    "48": "src/icons/icon48.png",
-    "128": "src/icons/icon128.png"
+    "256": "src/icons/logo.png"
   },
   "content_scripts": [
     {
