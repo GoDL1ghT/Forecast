@@ -1,4 +1,4 @@
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request) => {
     if (request.message) {
         if (request.message === "loadmatch-8642") {
             initialize();
@@ -64,7 +64,7 @@ class TeamWinRateCalculator {
         try {
             const response = await fetch(chrome.runtime.getURL(filePath));
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                console.error(`HTTP error! status: ${response.status}`);
             }
 
             const htmlContent = await response.text();
@@ -178,7 +178,7 @@ class TeamWinRateCalculator {
             console.error("Ошибка при запросе данных игрока: Ошибка при получении данных");
         }
         const newStats = response.json();
-        playerGamesDataCache.set(playerId,newStats);
+        playerGamesDataCache.set(playerId, newStats);
         return newStats;
     }
 
@@ -198,7 +198,7 @@ class TeamWinRateCalculator {
         }
 
         const newStats = response.json();
-        playerDataCache.set(playerId,newStats)
+        playerDataCache.set(playerId, newStats)
         return newStats;
     }
 
@@ -271,7 +271,7 @@ class TeamWinRateCalculator {
 
         await this.findUserCard(playerId, async userCardElement => {
             const existingTable = userCardElement.querySelector('.player-background-table');
-            if (existingTable) {
+            if (!existingTable) {
                 await this.insertHtmlToPlayerCard('src/visual/tables/player.html', playerId, userCardElement);
 
                 const playerStats = teamMap.get(playerId);
@@ -298,38 +298,42 @@ class TeamWinRateCalculator {
         // Ждем завершения всех промисов
         await Promise.all([...team1Promises, ...team2Promises]);
 
-        if (registeredObservers.has("info-table")) return
-
-        const observer = new MutationObserver((mutationsList) => {
-            observerCallback(this, mutationsList);
-        });
-
-        observer.observe(document.body, {attributes: true, childList: false, subtree: true});
-
-        registeredObservers.set("info-table", observer);
+        const element = document.querySelector(`[name="${targetElementName}"][class*="UserCard__Container"]`);
+        if (element) {
+            await handleInfoNode(calculator, targetNode)
+        } else {
+            if (registeredObservers.has("info-table")) return
+            const observer = new MutationObserver((mutationsList) => {
+                observerCallback(this, mutationsList);
+            });
+            observer.observe(document.body, {attributes: true, childList: false, subtree: true});
+            registeredObservers.set("info-table", observer);
+            console.log("Registering obserfer for INFO-TABLE");
+        }
     }
+}
+
+async function handleInfoNode(calculator, targetNode) {
+    if (targetNode.hasAttribute('data-processed')) return false;
+    if (targetNode.getAttribute('name') !== 'info' || !targetNode.matches('[class*="Overview__Column"]')) return false;
+
+    targetNode.setAttribute('data-processed', 'true');
+    await calculator.printResults(targetNode);
+    return true
 }
 
 async function observerCallback(calculator, mutationsList) {
     for (const mutation of mutationsList) {
         if (mutation.type === 'attributes') {
             const targetNode = mutation.target;
-            if (targetNode.hasAttribute('data-processed')) continue;
-            if (targetNode.getAttribute('name') !== 'info' || !targetNode.matches('[class*="Overview__Column"]')) continue;
-
-            targetNode.setAttribute('data-processed', 'true');
-            await calculator.printResults(targetNode);
+            if (!await handleInfoNode(calculator, targetNode)) continue;
             break;
         }
 
         if (mutation.type === 'childList') {
             for (const addedNode of mutation.addedNodes) {
                 if (addedNode.nodeType !== Node.ELEMENT_NODE) continue;
-                if (addedNode.hasAttribute('data-processed')) continue;
-                if (addedNode.getAttribute('name') !== 'info' || !addedNode.matches('[class*="Overview__Column"]')) continue;
-
-                addedNode.setAttribute('data-processed', 'true');
-                await calculator.printResults(addedNode);
+                if (!await handleInfoNode(calculator, addedNode)) continue;
                 break;
             }
         }
