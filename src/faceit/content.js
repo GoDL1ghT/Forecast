@@ -1,5 +1,3 @@
-console.log("Content script loaded.");
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.message) {
         if (request.message === "loadmatch-8642") {
@@ -8,31 +6,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
+let registeredObservers = new LimitedMap(20);
+let matchDataCache = new LimitedMap(5);
+let playerDataCache = new LimitedMap(50);
+let playerGamesDataCache = new LimitedMap(50);
+let isLoaded = false
+
 async function initialize() {
+    if (isLoaded) return
     const enabled = await isExtensionEnabled();
     if (!enabled) return;
     const apiKey = await getApiKey();
 
     if (apiKey) {
-        const rawMatchId = window.location.href.split("/").pop();
         const matchId = extractMatchId();
-
         const calculator = new TeamWinRateCalculator(apiKey);
 
         try {
-            if (!rawMatchId || rawMatchId !== matchId) return;
+            if (!matchId) return;
             await calculator.getMatchWinRates(matchId);
+            isLoaded = true;
         } catch (error) {
             console.error("Ошибка при получении статистики матча: " + error.message);
         }
     } else {
         console.log("Пожалуйста, введите ваш API Key в настройках!");
     }
-}
-
-function extractMatchId() {
-    const match = window.location.href.match(/room\/([a-z0-9-]+)/i);
-    return match ? match[1] : null;
 }
 
 class TeamWinRateCalculator {
@@ -43,6 +42,9 @@ class TeamWinRateCalculator {
     }
 
     async fetchMatchStats(matchId) {
+        const matchDataCached = matchDataCache.get(matchId)
+        if (matchDataCached) return matchDataCached;
+
         const url = `${this.baseUrl}/matches/${matchId}`;
         const response = await fetch(url, {
             headers: {
@@ -53,39 +55,28 @@ class TeamWinRateCalculator {
         if (!response.ok) {
             throw new Error(`Ошибка при получении статистики матча: ${response.statusText}`);
         }
-
-        return await response.json();
+        const newMatchData = await response.json()
+        matchDataCache.set(matchId, newMatchData);
+        return newMatchData;
     }
 
-    async insertHtmlFromFileByName(filePath, targetElementName) {
+    async insertHtmlToTeamCard(filePath, targetElement) {
         try {
             const response = await fetch(chrome.runtime.getURL(filePath));
-
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const htmlContent = await response.text();
-            const targetElement = document.querySelector(`[name="${targetElementName}"]`);
+            const firstChildWithClass = targetElement.querySelector('[class]');
+            firstChildWithClass.insertAdjacentHTML('afterend', htmlContent);
 
-            if (targetElement) {
-                const firstChildWithClass = targetElement.querySelector('[class]');
-
-                if (firstChildWithClass) {
-                    firstChildWithClass.insertAdjacentHTML('afterend', htmlContent);
-                } else {
-                    console.error(`No child with the specified class found inside the element with name "${targetElementName}".`);
-                }
-            } else {
-                console.error(`Element with name "${targetElementName}" not found.`);
-            }
         } catch (error) {
             console.error('Error loading HTML file:', error);
         }
     }
 
-    async insertHtmlFromFile(filePath, playerId, targetElement, callback = () => {
-    }) {
+    async insertHtmlToPlayerCard(filePath, playerId, targetNode) {
         const response = await fetch(chrome.runtime.getURL(filePath));
 
         if (!response.ok) {
@@ -96,19 +87,19 @@ class TeamWinRateCalculator {
 
         htmlContent = htmlContent.replace(/id="player-table"/g, `id="player-table-${playerId}"`);
 
-        targetElement.insertAdjacentHTML('beforeend', htmlContent);
-
-        callback();
+        targetNode.insertAdjacentHTML('beforeend', htmlContent);
     }
 
+    async printResults(targetNode) {
+        await this.insertHtmlToTeamCard('src/visual/tables/team.html', targetNode);
+        const printPromises = [];
 
-    async printResults() {
-        await this.insertHtmlFromFileByName('src/visual/tables/team.html', 'info')
         this.results.forEach((teamMap, teamName) => {
             const teamMatches = this.aggregateTeamMatches(teamMap);
-            this.printTeamMatches(teamName, teamMatches);
-            this.printPlayersStats(teamMap);
+            printPromises.push(this.printTeamMatches(teamName, teamMatches));
         });
+
+        await Promise.all(printPromises);
     }
 
     aggregateTeamMatches(teamMap) {
@@ -139,21 +130,6 @@ class TeamWinRateCalculator {
             });
     }
 
-    printPlayersStats(teamMap) {
-        console.log("\nPlayers:");
-        teamMap.forEach(({nickname, maps}) => {
-            const totalGames = Array.from(maps.values()).reduce((sum, data) => sum + data.totalGames, 0);
-            console.log(` ${nickname}: Stats for ${totalGames} matches`);
-
-            Array.from(maps.entries())
-                .sort(([, dataA], [, dataB]) => dataB.wins / dataB.totalGames - dataA.wins / dataA.totalGames)
-                .forEach(([mapName, data]) => {
-                    const winrate = (data.wins / totalGames * 100).toFixed(2);
-                    console.log(`  ${mapName} - Games: ${data.totalGames}, Wins: ${data.wins}, Winrate: ${winrate}%`);
-                });
-        });
-    }
-
     printPlayerStats(playerId, playerStats) {
         if (!playerStats) {
             console.log(`Player stats not found.`);
@@ -167,8 +143,6 @@ class TeamWinRateCalculator {
                 (winsB / totalB) - (winsA / totalA))
             .forEach(([mapName, {totalGames, wins}]) => {
                 const winrate = ((wins / totalGames) * 100).toFixed(2);
-                console.log(document.getElementById(`player-table-${playerId}`));
-                console.log(`player-table-${playerId}`);
                 addRow(`player-table-${playerId}`, mapName, totalGames, winrate);
             });
     }
@@ -189,6 +163,9 @@ class TeamWinRateCalculator {
     }
 
     async getPlayerGameStats(playerId) {
+        const cachedStats = playerGamesDataCache.get(playerId);
+        if (cachedStats) return cachedStats;
+
         const url = `https://open.faceit.com/data/v4/players/${playerId}/games/cs2/stats?limit=20`;
 
         const response = await fetch(url, {
@@ -200,11 +177,14 @@ class TeamWinRateCalculator {
         if (!response.ok) {
             console.error("Ошибка при запросе данных игрока: Ошибка при получении данных");
         }
-
-        return response.json();
+        const newStats = response.json();
+        playerGamesDataCache.set(playerId,newStats);
+        return newStats;
     }
 
     async getPlayerStats(playerId) {
+        const cachedStats = playerDataCache.get(playerId);
+        if (cachedStats) return cachedStats;
         const url = `https://open.faceit.com/data/v4/players/${playerId}`;
 
         const response = await fetch(url, {
@@ -217,48 +197,45 @@ class TeamWinRateCalculator {
             console.error("Ошибка при запросе данных игрока: Ошибка при получении данных");
         }
 
-        return response.json();
+        const newStats = response.json();
+        playerDataCache.set(playerId,newStats)
+        return newStats;
     }
 
     async findUserCard(playerId, callback) {
+        if (registeredObservers.has(playerId)) return
+
         const player = await this.getPlayerStats(playerId);
         const currentCountry = extractLanguage();
         const match = player.faceit_url.match(/\/players\/[^/]+/);
         const playerLink = "/" + currentCountry + match[0];
-        console.log("Ссылка игрока:", playerLink);
 
-        // Набор для хранения уникальных обработанных узлов
-        const processedNodes = new Set();
-
-        // Функция для проверки уникальности ноды
         function isUniqueNode(node) {
             const playerAnchor = node.querySelector(`a[href="${playerLink}"]`);
-            const hasTable = node.querySelector('.player-background-table');
-            return playerAnchor && !hasTable; // Уникальная, если есть ссылка и нет таблицы
+            const isProcessed = node.hasAttribute('data-processed');
+            return playerAnchor && !isProcessed;
         }
 
         const observer = new MutationObserver((mutationsList) => {
             for (const mutation of mutationsList) {
-                // Обрабатываем изменения атрибутов
-                if (mutation.type === 'attributes') {
-                    const target = mutation.target;
-                    // Проверяем, если это элемент с классом UserCard__Container
-                    if (target.nodeType === Node.ELEMENT_NODE && target.matches('[class*="UserCard__Container"]') && isUniqueNode(target) && !processedNodes.has(target)) {
-                        console.log("Контейнер найден (по изменению атрибутов):", target);
-                        processedNodes.add(target);
-                        if (typeof callback === "function") {
-                            callback(target);
-                        }
-                    }
-                }
+                if (mutation.type !== 'attributes') continue;
+                const targetNode = mutation.target;
+                if (!targetNode.matches('[class*="UserCard__Container"]')) continue;
+                if (!isUniqueNode(targetNode)) continue;
+                targetNode.setAttribute('data-processed', 'true');
+                callback(targetNode);
+                break;
             }
         });
 
-        observer.observe(document.body, {childList: true, subtree: true, attributes: true});
+        observer.observe(document.body, {attributes: true, childList: false, subtree: true});
+
+        registeredObservers.set(playerId, observer)
     }
 
+
     async calculateStats(team, playerId) {
-        const data = await this.getPlayerGameStats(playerId)
+        const data = await this.getPlayerGameStats(playerId);
 
         if (!data.items || data.items.length === 0) {
             return;
@@ -270,9 +247,8 @@ class TeamWinRateCalculator {
 
         const teamMap = this.results.get(team);
 
-        data.items.forEach((item) => {
+        data.items.forEach(item => {
             const stats = item.stats;
-
             if (stats["Game Mode"] !== "5v5") return;
 
             const mapName = stats["Map"];
@@ -293,35 +269,76 @@ class TeamWinRateCalculator {
             mapData.totalGames += 1;
         });
 
-        await this.findUserCard(playerId, (userCardElement) => {
-            console.log("Card found!");
-            this.insertHtmlFromFile('src/visual/tables/player.html', playerId, userCardElement, () => {
-                let playerStats;
-                this.results.forEach((teamMap) => {
-                    if (teamMap.has(playerId)) {
-                        playerStats = teamMap.get(playerId);
-                    }
-                });
-                this.printPlayerStats(playerId, playerStats);
-            });
+        await this.findUserCard(playerId, async userCardElement => {
+            const existingTable = userCardElement.querySelector('.player-background-table');
+            if (existingTable) {
+                await this.insertHtmlToPlayerCard('src/visual/tables/player.html', playerId, userCardElement);
+
+                const playerStats = teamMap.get(playerId);
+                if (playerStats) {
+                    this.printPlayerStats(playerId, playerStats);
+                }
+            }
         });
     }
+
 
     async displayWinRates(matchDetails) {
         const team1 = matchDetails.teams.faction1;
         const team2 = matchDetails.teams.faction2;
 
-        for (const player of team1.roster) {
-            await this.calculateStats(team1.name + "$roster1", player.player_id);
-        }
+        // Параллельное выполнение calculateStats для обеих команд
+        const team1Promises = team1.roster.map(player =>
+            this.calculateStats(`${team1.name}$roster1`, player.player_id)
+        );
+        const team2Promises = team2.roster.map(player =>
+            this.calculateStats(`${team2.name}$roster2`, player.player_id)
+        );
 
-        var i = 0
-        for (const player of team2.roster) {
-            await this.calculateStats(team2.name + "$roster2", player.player_id);
-        }
+        // Ждем завершения всех промисов
+        await Promise.all([...team1Promises, ...team2Promises]);
 
-        await this.printResults();
+        if (registeredObservers.has("info-table")) return
+
+        const observer = new MutationObserver((mutationsList) => {
+            observerCallback(this, mutationsList);
+        });
+
+        observer.observe(document.body, {attributes: true, childList: false, subtree: true});
+
+        registeredObservers.set("info-table", observer);
     }
+}
+
+async function observerCallback(calculator, mutationsList) {
+    for (const mutation of mutationsList) {
+        if (mutation.type === 'attributes') {
+            const targetNode = mutation.target;
+            if (targetNode.hasAttribute('data-processed')) continue;
+            if (targetNode.getAttribute('name') !== 'info' || !targetNode.matches('[class*="Overview__Column"]')) continue;
+
+            targetNode.setAttribute('data-processed', 'true');
+            await calculator.printResults(targetNode);
+            break;
+        }
+
+        if (mutation.type === 'childList') {
+            for (const addedNode of mutation.addedNodes) {
+                if (addedNode.nodeType !== Node.ELEMENT_NODE) continue;
+                if (addedNode.hasAttribute('data-processed')) continue;
+                if (addedNode.getAttribute('name') !== 'info' || !addedNode.matches('[class*="Overview__Column"]')) continue;
+
+                addedNode.setAttribute('data-processed', 'true');
+                await calculator.printResults(addedNode);
+                break;
+            }
+        }
+    }
+}
+
+function extractMatchId() {
+    const match = window.location.href.match(/room\/([a-z0-9-]+)/i);
+    return match ? match[1] : null;
 }
 
 function extractLanguage() {
