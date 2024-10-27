@@ -11,30 +11,17 @@ async function isExtensionEnabled() {
 function setGradientColor(winrateCell, percent) {
     percent = Math.min(Math.max(percent, 0), 100);
     const ratio = percent / 100;
-    const colorRed = "#ff0022";
-    const colorYellow = "#fbec1e";
-    const colorGreen = "#32d35a";
-    let gradientColor;
-    if (ratio < 0.5) {
-        const t = ratio * 2;
-        gradientColor = interpolateColor(colorRed, colorYellow, t);
-    } else {
-        const t = (ratio - 0.5) * 2;
-        gradientColor = interpolateColor(colorYellow, colorGreen, t);
-    }
+    const colorStops = ["#ff0022", "#fbec1e", "#32d35a"];
+    const gradientColor = ratio < 0.5
+        ? interpolateColor(colorStops[0], colorStops[1], ratio * 2)
+        : interpolateColor(colorStops[1], colorStops[2], (ratio - 0.5) * 2);
     winrateCell.style.color = gradientColor;
 }
 
 function interpolateColor(color1, color2, factor) {
-    const r1 = parseInt(color1.slice(1, 3), 16);
-    const g1 = parseInt(color1.slice(3, 5), 16);
-    const b1 = parseInt(color1.slice(5, 7), 16);
-    const r2 = parseInt(color2.slice(1, 3), 16);
-    const g2 = parseInt(color2.slice(3, 5), 16);
-    const b2 = parseInt(color2.slice(5, 7), 16);
-    const r = Math.round(r1 + (r2 - r1) * factor).toString(16).padStart(2, '0');
-    const g = Math.round(g1 + (g2 - g1) * factor).toString(16).padStart(2, '0');
-    const b = Math.round(b1 + (b2 - b1) * factor).toString(16).padStart(2, '0');
+    const [r1, g1, b1] = [color1.slice(1, 3), color1.slice(3, 5), color1.slice(5, 7)].map(c => parseInt(c, 16));
+    const [r2, g2, b2] = [color2.slice(1, 3), color2.slice(3, 5), color2.slice(5, 7)].map(c => parseInt(c, 16));
+    const [r, g, b] = [r1 + (r2 - r1) * factor, g1 + (g2 - g1) * factor, b1 + (b2 - b1) * factor].map(c => Math.round(c).toString(16).padStart(2, '0'));
     return `#${r}${g}${b}`;
 }
 
