@@ -12,21 +12,29 @@ body {
     border: 2px solid #ff4500; /* Orange border */
     border-radius: 15px; /* Rounded corners for container */
     padding: 20px; /* Increased padding for more space */
-    width: 400px; /* Fixed width of popup */
+    width: 350px; /* Fixed width of popup */
     height: auto; /* Auto height to fit content */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow effect */
 }
 
 /* Header Styles */
+.extension-title {
+    text-align: center; /* Centered extension title */
+    font-size: 35px; /* Larger font size for extension title */
+    color: #ffffff; /* Orange color for visibility */
+    margin: 5px 0 20px 0; /* Space below the title */
+}
+
 h1 {
     color: #ff4500; /* Coral orange for headings */
-    text-align: center; /* Center the heading */
-    margin-bottom: 20px; /* Space below the heading */
+    text-align: left; /* Center the heading */
+    margin-bottom: 15px; /* Space below the heading */
+    font-size: 18px;
 }
 
 /* Setting Item Styles */
 .setting-item {
-    margin: 15px 0; /* Space between each setting */
+    margin: 10px 0; /* Space between each setting */
     display: flex; /* Flexbox for alignment */
     align-items: center; /* Center vertically */
     justify-content: space-between; /* Space between label and switch */
@@ -36,6 +44,8 @@ h1 {
 label {
     margin-bottom: 5px; /* Space below labels */
     font-size: 16px; /* Slightly larger font for labels */
+    flex-shrink: 0; /* Prevent label from shrinking */
+    margin-right: 10px; /* Space between label and input */
 }
 
 /* Input Field Styles */
@@ -64,7 +74,7 @@ button {
     border-radius: 5px; /* Rounded corners for button */
     cursor: pointer; /* Pointer cursor for button */
     font-size: 16px; /* Larger font for button */
-    margin-top: 10px; /* Space above button */
+    margin-top: 23px; /* Space above button */
     transition: background-color 0.3s; /* Transition for background color */
     display: block; /* Block display for button */
     width: 100%; /* Full width button */
@@ -72,7 +82,7 @@ button {
 
 /* Button Hover Effect */
 button:hover {
-    background-color: #a33507; /* Darker orange on hover */
+    background-color: #ed6530; /* Darker orange on hover */
 }
 
 /* Styling for the toggle switch */
