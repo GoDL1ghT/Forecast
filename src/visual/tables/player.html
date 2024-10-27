@@ -3,23 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script scr="scr"></script>
+    <style>
+        .player-background-table {
+            display: flex;
+            justify-content: center; /* Центрируем элементы */
+            padding: 20px;
+            background: transparent;
+        }
+
+        .player-container {
+            width: 48%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin: 0 10px; /* Добавляем немного отступа */
+        }
+
+        .player-table {
+            width: 100%;
+            background: rgb(28, 28, 28);
+            border-radius: 8px;
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+
+        th, td {
+            border: none;
+            text-align: center;
+            color: white;
+            padding: 10px;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        th {
+            position: relative;
+            background-color: rgb(37, 37, 37);
+        }
+
+        td {
+            vertical-align: middle;
+        }
+    </style>
     <title></title>
 </head>
 <body>
-<div class="background-table">
-    <table id="playerTable">
-        <thead>
-        <tr>
-            <th>Карта</th>
-            <th>Игры</th>
-            <th>Победы</th>
-            <th>Процент побед</th>
-        </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+<div class="player-background-table">
+    <div class="player-container">
+        <table class="player-table" id="player-table">
+            <thead>
+            <tr>
+                <th>Карта</th>
+                <th>Игр</th>
+                <th>Винрейт</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
 </div>
 </body>
 </html>

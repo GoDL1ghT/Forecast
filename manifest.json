@@ -24,14 +24,15 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["src/faceit/popup.js", "src/faceit/content.js"]
+      "matches": ["https://www.faceit.com/ru/cs2/room/*"],
+      "js": ["src/faceit/api.js", "src/faceit/content.js"]
     }
   ],
   "web_accessible_resources": [
     {
       "resources": [
-        "src/visual/tables/team.html"
+        "src/visual/tables/team.html",
+        "src/visual/tables/player.html"
       ],
       "matches": [
         "<all_urls>"
