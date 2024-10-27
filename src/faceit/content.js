@@ -298,9 +298,9 @@ class TeamWinRateCalculator {
         // Ждем завершения всех промисов
         await Promise.all([...team1Promises, ...team2Promises]);
 
-        const element = document.querySelector(`[name="${targetElementName}"][class*="UserCard__Container"]`);
+        const element = document.querySelector(`[name="info"][class*="Overview__Column"]`);
         if (element) {
-            await handleInfoNode(calculator, targetNode)
+            await handleInfoNode(this, element);
         } else {
             if (registeredObservers.has("info-table")) return
             const observer = new MutationObserver((mutationsList) => {
@@ -308,7 +308,7 @@ class TeamWinRateCalculator {
             });
             observer.observe(document.body, {attributes: true, childList: false, subtree: true});
             registeredObservers.set("info-table", observer);
-            console.log("Registering obserfer for INFO-TABLE");
+            console.log("Registering observer for INFO-TABLE");
         }
     }
 }
