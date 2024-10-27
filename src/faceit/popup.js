@@ -125,28 +125,28 @@ class TeamWinRateCalculator {
             console.log(matchStats);
         })
 
-        exec(
-            [team1WinRate, team2WinRate],
-            (team1WinRate, team2WinRate) => {
-                let info = document.querySelector('[class*="Overview__Column"][name="info"]');
-
-                if (info == null) {
-                    console.warn("Целевой элемент не найден. Проверьте, существует ли он на странице.");
-                    return;
-                }
-
-                const winRateElement = document.createElement('div');
-                winRateElement.style.marginTop = '10px';
-                winRateElement.innerHTML = `
-                    <h4>Проценты побед:</h4>
-                    <p>Команда 1: ${team1WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team1WinRate.totalGames})</p>
-                    <p>Команда 2: ${team2WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team2WinRate.totalGames})</p>
-                `;
-
-                info.appendChild(winRateElement);
-                console.log("Данные успешно добавлены к элементу.");
-            }
-        )
+        // exec(
+        //     [team1WinRate, team2WinRate],
+        //     (team1WinRate, team2WinRate) => {
+        //         let info = document.querySelector('[class*="Overview__Column"][name="info"]');
+        //
+        //         if (info == null) {
+        //             console.warn("Целевой элемент не найден. Проверьте, существует ли он на странице.");
+        //             return;
+        //         }
+        //
+        //         const winRateElement = document.createElement('div');
+        //         winRateElement.style.marginTop = '10px';
+        //         winRateElement.innerHTML = `
+        //             <h4>Проценты побед:</h4>
+        //             <p>Команда 1: ${team1WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team1WinRate.totalGames})</p>
+        //             <p>Команда 2: ${team2WinRate.teamAverageWinRate.toFixed(2)}% (Игры: ${team2WinRate.totalGames})</p>
+        //         `;
+        //
+        //         info.appendChild(winRateElement);
+        //         console.log("Данные успешно добавлены к элементу.");
+        //     }
+        // )
     }
 }
 
