@@ -13,7 +13,7 @@ class TeamWinRateCalculator {
     }
 
     async fetchMatchStats(matchId) {
-        const url = `${this.baseUrl}/matches/${matchId}/stats`;
+        const url = `${this.baseUrl}/matches/${matchId}`;
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${this.apiKey}`
@@ -59,7 +59,7 @@ class TeamWinRateCalculator {
         try {
             const matchStats = await this.fetchMatchStats(matchId);
 
-            if (!matchStats || !matchStats.rounds || !Array.isArray(matchStats.rounds)) {
+            if (!matchStats || !matchStats.match_id) {
                 console.error("Invalid match stats structure:", matchStats);
                 throw new Error("Invalid match stats structure.");
             }
@@ -121,9 +121,9 @@ class TeamWinRateCalculator {
     }
 
     async displayWinRates(matchStats) {
-        exec([matchStats], (matchStats) => {
+        // exec([matchStats], (matchStats) => {
             console.log(matchStats);
-        })
+        // })
 
         // exec(
         //     [team1WinRate, team2WinRate],
@@ -169,9 +169,7 @@ async function getMatchIdFromActiveTab() {
     return url.pathname.split('/').pop() || null;
 }
 
-// Инициализация и загрузка настроек
-async function initialize() {
-    console.log("Initialization...");
+async function popupLoad() {
     const enabled = await isExtensionEnabled();
     const toggleExtension = document.getElementById('toggleExtension');
 
@@ -183,9 +181,13 @@ async function initialize() {
 
     if (!enabled) {
         document.getElementById("matchStats").innerText = "Расширение отключено!";
-        return;
     }
+}
 
+// Инициализация и загрузка настроек
+async function initialize() {
+    const enabled = await isExtensionEnabled();
+    if (!enabled) return;
     const apiKey = await getApiKey();
 
     if (apiKey) {
@@ -206,7 +208,6 @@ async function initialize() {
     } else {
         document.getElementById("matchStats").innerText = "Пожалуйста, введите ваш API Key в настройках!";
     }
-    console.log("Initialized");
 }
 
 // Загрузка настроек при открытии popup
@@ -262,7 +263,7 @@ document.getElementById('saveSettings').addEventListener('click', (event) => {
 // Загрузка настроек при загрузке документа
 document.addEventListener("DOMContentLoaded", async () => {
     await loadSettings();
-    // await initialize(); Чтобы не перепрогружалось при нажатии на расширение
+    await popupLoad();
 
     // Слушатель для переключателя
     const toggleExtension = document.getElementById('toggleExtension');
