@@ -26,11 +26,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/faceit/content.js"]
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": ["src/faceit/popup.js"]
+      "js": ["src/faceit/popup.js","src/faceit/content.js"]
     }
   ]
 }

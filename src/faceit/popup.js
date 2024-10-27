@@ -64,15 +64,7 @@ class TeamWinRateCalculator {
                 throw new Error("Invalid match stats structure.");
             }
 
-            const team1WinRate = await this.calculateTeamAverageWinRate(matchStats.rounds[0].teams[0]);
-            const team2WinRate = await this.calculateTeamAverageWinRate(matchStats.rounds[0].teams[1]);
-
-            if (team1WinRate === undefined || team2WinRate === undefined) {
-                console.error("Невозможно получить данные о проценте побед для команд.");
-                return;
-            }
-
-            await this.displayWinRates(team1WinRate, team2WinRate);
+            await this.displayWinRates(matchStats);
         } catch (error) {
             console.error("Ошибка при получении статистики матча:", error.message);
         }
@@ -128,7 +120,11 @@ class TeamWinRateCalculator {
         };
     }
 
-    async displayWinRates(team1WinRate, team2WinRate) {
+    async displayWinRates(matchStats) {
+        exec([matchStats], (matchStats) => {
+            console.log(matchStats);
+        })
+
         exec(
             [team1WinRate, team2WinRate],
             (team1WinRate, team2WinRate) => {
@@ -175,6 +171,7 @@ async function getMatchIdFromActiveTab() {
 
 // Инициализация и загрузка настроек
 async function initialize() {
+    console.log("Initialization...");
     const enabled = await isExtensionEnabled();
     const toggleExtension = document.getElementById('toggleExtension');
 
@@ -192,7 +189,7 @@ async function initialize() {
     const apiKey = await getApiKey();
 
     if (apiKey) {
-        const matchId = await getMatchIdFromActiveTab();
+        const matchId = window.location.href.split("/").pop();//await getMatchIdFromActiveTab();
 
         if (!matchId) {
             document.getElementById("matchStats").innerText = "Не удалось получить ID матча. Убедитесь, что вы на странице матча.";
@@ -209,6 +206,7 @@ async function initialize() {
     } else {
         document.getElementById("matchStats").innerText = "Пожалуйста, введите ваш API Key в настройках!";
     }
+    console.log("Initialized");
 }
 
 // Загрузка настроек при открытии popup
@@ -264,7 +262,7 @@ document.getElementById('saveSettings').addEventListener('click', (event) => {
 // Загрузка настроек при загрузке документа
 document.addEventListener("DOMContentLoaded", async () => {
     await loadSettings();
-    await initialize();
+    // await initialize(); Чтобы не перепрогружалось при нажатии на расширение
 
     // Слушатель для переключателя
     const toggleExtension = document.getElementById('toggleExtension');
