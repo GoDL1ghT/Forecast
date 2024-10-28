@@ -9,7 +9,7 @@ async function popupLoad() {
     }
 
     if (!enabled) {
-        document.getElementById("matchStats").innerText = "Расширение отключено!";
+        document.getElementById("matchStats").innerText = "The extension is disabled!";
     }
 }
 
@@ -36,7 +36,7 @@ async function saveSettings() {
     const isEnabled = document.getElementById('toggleExtension').checked;
 
     chrome.storage.sync.set({apiKey, isEnabled}, () => {
-        console.log('Настройки сохранены:', {apiKey, isEnabled});
+        console.log('The settings have been saved:', {apiKey, isEnabled});
         showSaveMessage();
     });
 }
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         toggleExtension.addEventListener('change', function () {
             const isEnabled = this.checked;
             chrome.storage.sync.set({isEnabled}, () => {
-                console.log('Расширение включено:', isEnabled);
+                console.log('Extension enabled:', isEnabled);
             });
         });
     }

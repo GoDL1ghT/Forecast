@@ -8,14 +8,14 @@ let currentMatchId
 chrome.runtime.onMessage.addListener((request) => {
     if (request.message) {
         if (request.message === "loadmatch") {
-            console.log("loading...");
+            console.log("Loading...");
             addListenerToRun(async () => {
-                console.log("running...");
+                console.log("Running...");
                 await initialize();
             }).then(() => {
                 console.log("Enabled");
             }).catch(error => {
-                console.error("Ошибка при активации:", error);
+                console.error("Error during activation:", error);
             });
         }
         if (request.message === "disable") {
@@ -25,7 +25,7 @@ chrome.runtime.onMessage.addListener((request) => {
             }).then(() => {
                 console.log("Disabled");
             }).catch(error => {
-                console.error("Ошибка при отключении:", error);
+                console.error("Disconnection error:", error);
             });
         }
     }
@@ -60,10 +60,10 @@ async function initialize() {
             currentMatchId = matchId
             isLoaded = true;
         } catch (error) {
-            console.error("Ошибка при получении статистики матча: " + error.message);
+            console.error("Error when retrieving match statistics: " + error.message);
         }
     } else {
-        console.log("Пожалуйста, введите ваш API Key в настройках!");
+        console.log("Please enter your API Key in the settings!");
     }
 }
 
@@ -86,7 +86,7 @@ class TeamWinRateCalculator {
         });
 
         if (!response.ok) {
-            throw new Error(`Ошибка при получении статистики матча: ${response.statusText}`);
+            throw new Error(`Error when retrieving match statistics: ${response.statusText}`);
         }
         const newMatchData = await response.json()
         matchDataCache.set(matchId, newMatchData);
@@ -97,7 +97,7 @@ class TeamWinRateCalculator {
         try {
             const response = await fetch(chrome.runtime.getURL(filePath));
             if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status}`);
+                console.error(`HTTP error! Status: ${response.status}`);
             }
 
             const htmlContent = await response.text();
@@ -165,7 +165,7 @@ class TeamWinRateCalculator {
 
     printPlayerStats(playerId, playerStats) {
         if (!playerStats) {
-            console.log(`Player stats not found.`);
+            console.log(`Player stats not found!`);
             return;
         }
 
@@ -183,13 +183,13 @@ class TeamWinRateCalculator {
 
     async getMatchWinRates(matchId) {
         if (!matchId) {
-            throw new Error("Match ID is not provided.");
+            throw new Error("Match ID is not provided!");
         }
 
         const matchStats = await this.fetchMatchStats(matchId);
 
         if (!matchStats || !matchStats.match_id) {
-            console.error("Ошибка при получении статистики матча: Неверная структура матча.");
+            console.error("Error when retrieving match statistics: Incorrect match structure.");
         }
 
         await this.displayWinRates(matchStats);
@@ -208,7 +208,7 @@ class TeamWinRateCalculator {
         });
 
         if (!response.ok) {
-            console.error("Ошибка при запросе данных игрока: Ошибка при получении данных");
+            console.error("Error when requesting player data: Error when receiving data");
         }
         const newStats = response.json();
         playerGamesDataCache.set(playerId, newStats);
@@ -227,7 +227,7 @@ class TeamWinRateCalculator {
         });
 
         if (!response.ok) {
-            console.error("Ошибка при запросе данных игрока: Ошибка при получении данных");
+            console.error("Error when requesting player data: Error when receiving data");
         }
 
         const newStats = response.json();
