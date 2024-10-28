@@ -1,7 +1,5 @@
 let previousUrl = "";
 
-
-
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url) {
 
@@ -19,7 +17,7 @@ function tryEnableMatchRoom(tabId,url) {
     const module = "matchroom"
 
     if (match) {
-        if (previousUrl === currentUrl) {
+        if (previousUrl === url) {
             sendMessage(tabId, {message: "loadmatch", module: module});
         } else {
             sendMessage(tabId, {message: "reload", module: module});
