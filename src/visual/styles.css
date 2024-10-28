@@ -1,100 +1,90 @@
-/* Global Styles */
 body {
-    background-color: #2b2b2b; /* Dark gray background */
-    color: #ffffff; /* White text for contrast */
-    font-family: 'Arial', sans-serif; /* Clean font */
-    padding: 20px; /* Padding around the body */
-    margin: 0; /* Remove default margin */
+    background-color: #2b2b2b;
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+    padding: 20px;
+    margin: 0;
 }
 
-/* Container Styles */
 .container {
-    border: 2px solid #ff4500; /* Orange border */
-    border-radius: 15px; /* Rounded corners for container */
-    padding: 20px; /* Increased padding for more space */
-    width: 350px; /* Fixed width of popup */
-    height: auto; /* Auto height to fit content */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow effect */
+    border: 2px solid #ff4500;
+    border-radius: 15px;
+    padding: 20px;
+    width: 350px;
+    height: auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
-/* Header Styles */
 .extension-title {
-    text-align: center; /* Centered extension title */
-    font-size: 35px; /* Larger font size for extension title */
-    color: #ffffff; /* Orange color for visibility */
-    margin: 5px 0 20px 0; /* Space below the title */
+    text-align: center;
+    font-size: 35px;
+    color: #ffffff;
+    margin: 5px 0 20px 0;
 }
 
 h1 {
-    color: #ff4500; /* Coral orange for headings */
-    text-align: left; /* Center the heading */
-    margin-bottom: 15px; /* Space below the heading */
+    color: #ff4500;
+    text-align: left;
+    margin-bottom: 15px;
     font-size: 18px;
 }
 
-/* Setting Item Styles */
 .setting-item {
-    margin: 10px 0; /* Space between each setting */
-    display: flex; /* Flexbox for alignment */
-    align-items: center; /* Center vertically */
-    justify-content: space-between; /* Space between label and switch */
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-/* Label Styles */
 label {
-    margin-bottom: 5px; /* Space below labels */
-    font-size: 16px; /* Slightly larger font for labels */
-    flex-shrink: 0; /* Prevent label from shrinking */
-    margin-right: 10px; /* Space between label and input */
+    margin-bottom: 5px;
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-right: 10px;
 }
 
-/* Input Field Styles */
 input[type="text"] {
-    width: 100%; /* Full width input */
-    padding: 10px; /* Padding inside input */
-    border: 1px solid #ff4500; /* Orange border */
-    border-radius: 5px; /* Rounded corners for input */
-    background-color: #333333; /* Darker gray for input background */
-    color: #ffffff; /* White text for input */
-    transition: border-color 0.3s; /* Transition for border color */
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ff4500;
+    border-radius: 5px;
+    background-color: #333333;
+    color: #ffffff;
+    transition: border-color 0.3s;
 }
 
-/* Focus State for Input */
 input[type="text"]:focus {
-    border-color: #ff8800; /* Brighter orange on focus */
-    outline: none; /* Remove outline */
+    border-color: #ff8800;
+    outline: none;
 }
 
-/* Button Styles */
 button {
-    background-color: #ff4500; /* Coral orange for button */
-    color: #ffffff; /* White text for button */
-    padding: 10px 15px; /* Padding for button */
-    border: none; /* Remove border */
-    border-radius: 5px; /* Rounded corners for button */
-    cursor: pointer; /* Pointer cursor for button */
-    font-size: 16px; /* Larger font for button */
-    margin-top: 23px; /* Space above button */
-    transition: background-color 0.3s; /* Transition for background color */
-    display: block; /* Block display for button */
-    width: 100%; /* Full width button */
+    background-color: #ff4500;
+    color: #ffffff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 23px;
+    transition: background-color 0.3s;
+    display: block;
+    width: 100%;
 }
 
-/* Button Hover Effect */
 button:hover {
-    background-color: #ed6530; /* Darker orange on hover */
+    background-color: #ed6530;
 }
 
-/* Styling for the toggle switch */
 .switch {
     position: relative;
     display: inline-block;
-    width: 60px; /* Width of toggle */
-    height: 34px; /* Height of toggle */
+    width: 60px;
+    height: 34px;
 }
 
 .switch input {
-    opacity: 0; /* Hide the default checkbox */
+    opacity: 0;
     width: 0;
     height: 0;
 }
@@ -106,45 +96,42 @@ button:hover {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc; /* Gray background */
-    transition: .4s; /* Transition effect */
-    border-radius: 34px; /* Rounded edges */
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
 }
 
 .slider:before {
     position: absolute;
     content: "";
-    height: 26px; /* Height of toggle knob */
-    width: 26px; /* Width of toggle knob */
-    left: 4px; /* Space from left */
-    bottom: 4px; /* Space from bottom */
-    background-color: white; /* White toggle knob */
-    transition: .4s; /* Transition effect */
-    border-radius: 50%; /* Round toggle knob */
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
 }
 
-/* Toggle Checked Styles */
 input:checked + .slider {
-    background-color: #ff4500; /* Change background when checked */
+    background-color: #ff4500;
 }
 
 input:checked + .slider:before {
-    transform: translateX(26px); /* Move knob to the right */
+    transform: translateX(26px);
 }
 
-/* Save Message Styles */
 .save-message {
-    display: none; /* Hidden by default */
-    background-color: #4caf50; /* Green background */
+    display: none;
+    background-color: #4caf50;
     color: white;
     padding: 10px;
     margin-top: 10px;
     border-radius: 5px;
     text-align: center;
-    transition: opacity 0.5s; /* Fade in/out */
+    transition: opacity 0.5s;
 }
 
-/* Show Class for Save Message */
 .save-message.show {
-    display: block; /* Show the message */
+    display: block;
 }

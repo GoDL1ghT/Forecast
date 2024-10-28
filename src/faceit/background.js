@@ -3,14 +3,26 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 console.log("Background script is running.");
 
+let previousUrl = "";
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url) {
-        const regex = /^https:\/\/www\.faceit\.com\/ru\/cs2\/room\/[0-9a-zA-Z\-]+(\/.*)?$/;
-        const match = tab.url.match(regex);
+
+        const currentUrl = tab.url;
+
+        const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/cs2\/room\/[0-9a-zA-Z\-]+(\/.*)?$/;
+        const match = currentUrl.match(regex);
+
         if (match) {
-            chrome.tabs.sendMessage(tabId, {message: "loadmatch"});
+            if (previousUrl === currentUrl) {
+                chrome.tabs.sendMessage(tabId, {message: "loadmatch", url: currentUrl });
+            } else {
+                chrome.tabs.sendMessage(tabId, {message: "reload", url: currentUrl });
+            }
         } else {
             chrome.tabs.sendMessage(tabId, {message: "disable"});
         }
+
+        previousUrl = currentUrl;
     }
 });

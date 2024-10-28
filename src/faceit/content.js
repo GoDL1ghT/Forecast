@@ -2,15 +2,28 @@ let registeredObservers = new LimitedMap(100);
 let matchDataCache = new LimitedMap(5);
 let playerDataCache = new LimitedMap(50);
 let playerGamesDataCache = new LimitedMap(50);
+let cachedNodes = [];
+let processedNodes = [];
 let isLoaded = false
 let currentMatchId
 
 chrome.runtime.onMessage.addListener((request) => {
+    console.log(request.url);
     if (request.message) {
         if (request.message === "loadmatch") {
             console.log("Loading...");
             addListenerToRun(async () => {
-                console.log("Running...");
+                await initialize();
+            }).then(() => {
+                console.log("Enabled");
+            }).catch(error => {
+                console.error("Error during activation:", error);
+            });
+        }
+        if (request.message === "reload") {
+            console.log("Reloading...");
+            addListenerToRun(async () => {
+                disable();
                 await initialize();
             }).then(() => {
                 console.log("Enabled");
@@ -20,8 +33,7 @@ chrome.runtime.onMessage.addListener((request) => {
         }
         if (request.message === "disable") {
             addListenerToRun(() => {
-                isLoaded = false;
-                currentMatchId = undefined;
+                disable()
             }).then(() => {
                 console.log("Disabled");
             }).catch(error => {
@@ -31,6 +43,24 @@ chrome.runtime.onMessage.addListener((request) => {
     }
 });
 
+function disable() {
+    console.log("Disabling...");
+    cachedNodes.forEach((node) => {
+        node.remove();
+    });
+    cachedNodes.length = 0;
+    processedNodes.forEach((node) => {
+        node.removeAttribute('data-processed')
+    });
+    processedNodes.length = 0;
+    registeredObservers.forEach((observer) => {
+        observer.disconnect();
+    })
+    registeredObservers.clear();
+    isLoaded = false;
+    currentMatchId = undefined;
+}
+
 function addListenerToRun(callback) {
     return new Promise((resolve) => {
         if (document.readyState === "loading") {
@@ -38,7 +68,6 @@ function addListenerToRun(callback) {
                 callback().then(resolve);
             });
         } else {
-            // Если DOM уже загружен, вызываем callback немедленно
             callback().then(resolve);
         }
     });
@@ -47,6 +76,7 @@ function addListenerToRun(callback) {
 async function initialize() {
     const matchId = extractMatchId();
     if (isLoaded && currentMatchId === matchId) return
+    console.log("Running...");
     const enabled = await isExtensionEnabled();
     if (!enabled) return;
     const apiKey = await getApiKey();
@@ -94,19 +124,22 @@ class TeamWinRateCalculator {
     }
 
     async insertHtmlToTeamCard(filePath, targetElement) {
-        try {
-            const response = await fetch(chrome.runtime.getURL(filePath));
-            if (!response.ok) {
-                console.error(`HTTP error! Status: ${response.status}`);
-            }
-
-            const htmlContent = await response.text();
-            const firstChildWithClass = targetElement.querySelector('[class]');
-            firstChildWithClass.insertAdjacentHTML('afterend', htmlContent);
-
-        } catch (error) {
-            console.error('Error loading HTML file:', error);
+        const response = await fetch(chrome.runtime.getURL(filePath));
+        if (!response.ok) {
+            console.error(`HTTP error! Status: ${response.status}`);
+            return null;
         }
+
+        const htmlContent = await response.text();
+        const firstChildWithClass = targetElement.querySelector('[class]');
+
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+
+        if (firstChildWithClass) {
+            firstChildWithClass.insertAdjacentElement('afterend', tempDiv);
+        }
+        cachedNodes.push(tempDiv);
     }
 
     async insertHtmlToPlayerCard(filePath, playerId, targetNode) {
@@ -120,8 +153,14 @@ class TeamWinRateCalculator {
 
         htmlContent = htmlContent.replace(/id="player-table"/g, `id="player-table-${playerId}"`);
 
-        targetNode.insertAdjacentHTML('beforeend', htmlContent);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+
+        targetNode.insertAdjacentElement('beforeend', tempDiv);
+
+        cachedNodes.push(tempDiv);
     }
+
 
     async printResults(targetNode) {
         await this.insertHtmlToTeamCard('src/visual/tables/team.html', targetNode);
@@ -243,9 +282,8 @@ class TeamWinRateCalculator {
         const match = player.faceit_url.match(/\/players\/[^/]+/);
         const playerLink = "/" + currentCountry + match[0];
 
-        console.log("Looking for player link:", playerLink); // Для отладки, можно убрать в рабочем коде
+        console.log("Looking for player link:", playerLink);
 
-        // Функция проверки, уникален ли узел
         function isUniqueNode(node) {
             const playerAnchor = node.querySelector(`a[href="${playerLink}"]`);
             const isProcessed = node.hasAttribute('data-processed');
@@ -263,6 +301,7 @@ class TeamWinRateCalculator {
                                 const targetNode = node.matches('[class*="UserCard__Container"]') ? node : node.querySelector('[class*="UserCard__Container"]');
                                 if (isUniqueNode(targetNode)) {
                                     targetNode.setAttribute('data-processed', 'true');
+                                    processedNodes.push(targetNode);
                                     callback(targetNode);
                                     found = true
                                     break;
@@ -338,7 +377,6 @@ class TeamWinRateCalculator {
         const team1 = matchDetails.teams.faction1;
         const team2 = matchDetails.teams.faction2;
 
-        // Параллельное выполнение calculateStats для обеих команд
         const team1Promises = team1.roster.map(player =>
             this.calculateStats(`${team1.name}$roster1`, player.player_id)
         );
@@ -346,38 +384,41 @@ class TeamWinRateCalculator {
             this.calculateStats(`${team2.name}$roster2`, player.player_id)
         );
 
-        // Ждем завершения всех промисов
         await Promise.all([...team1Promises, ...team2Promises]);
 
         const element = document.querySelector(`[name="info"][class*="Overview__Column"]`);
-        if (element) await handleInfoNode(this, element);
-        if (registeredObservers.has("info-table")) return
-        const observer = new MutationObserver((mutationsList) => {
-            observerCallback(this, mutationsList);
-        });
-        observer.observe(document.body, {attributes: true, childList: true, subtree: true});
-        registeredObservers.set("info-table", observer);
-        console.log("Registering observer for INFO-TABLE");
+        if (element) {
+            await handleInfoNode(this, element);
+        } else {
+            if (registeredObservers.has("info-table")) return
+            const observer = new MutationObserver((mutationsList) => {
+                observerCallback(this, mutationsList);
+            });
+            observer.observe(document.body, {attributes: true, childList: true, subtree: true});
+            registeredObservers.set("info-table", observer);
+            console.log("Registering observer for INFO-TABLE");
+        }
     }
 }
 
 async function handleInfoNode(calculator, node) {
-    if (node.hasAttribute('data-processed')) return false;
-    if (node.getAttribute('name') !== 'info') return false;
-    if (!node.matches('[class*="Overview__Column"]') || node.querySelector('[class*="Overview__Column"]')) return false;
-    const targetNode = node.matches('[class*="Overview__Column"]') ? node : node.querySelector('[class*="Overview__Column"]');
+    if (!node.matches('[name="info"]') && !node.querySelector('[name="info"][class*="Overview__Column"]')) return false;
+    const targetNode = node.matches('[name="info"]') ? node : node.querySelector('[name="info"][class*="Overview__Column"]');
+    if (targetNode.hasAttribute('data-processed')) return false;
 
     targetNode.setAttribute('data-processed', 'true');
+    processedNodes.push(targetNode);
     await calculator.printResults(targetNode);
     return true
 }
 
 async function observerCallback(calculator, mutationsList) {
+    let found = false
     for (const mutation of mutationsList) {
-        let found = false
         if (mutation.type === 'childList') {
             for (const addedNode of mutation.addedNodes) {
                 if (addedNode.nodeType !== Node.ELEMENT_NODE) continue;
+                console.log(addedNode)
                 if (!await handleInfoNode(calculator, addedNode)) continue;
                 found = true;
                 break;
