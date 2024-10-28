@@ -8,38 +8,30 @@ let isLoaded = false
 let currentMatchId
 
 chrome.runtime.onMessage.addListener((request) => {
-    println(request.url);
-    if (request.message) {
-        if (request.message === "loadmatch") {
-            println("Loading...");
-            addListenerToRun(async () => {
+    const handleMessage = async (action) => {
+        switch (action) {
+            case "loadmatch":
+                println("Loading...");
                 await initialize();
-            }).then(() => {
                 println("Enabled");
-            }).catch(error => {
-                error("Error during activation:", error);
-            });
-        }
-        if (request.message === "reload") {
-            println("Reloading...");
-            addListenerToRun(async () => {
+                break;
+            case "reload":
+                println("Reloading...");
                 disable();
                 await initialize();
-            }).then(() => {
                 println("Enabled");
-            }).catch(error => {
-                error("Error during activation:", error);
-            });
-        }
-        if (request.message === "disable") {
-            addListenerToRun(() => {
-                disable()
-            }).then(() => {
+                break;
+            case "disable":
+                disable();
                 println("Disabled");
-            }).catch(error => {
-                error("Disconnection error:", error);
-            });
+                break;
+            default:
+                println("Unknown action:", action);
         }
+    }
+
+    if (request.message) {
+        addListenerToRun(() => handleMessage(request.message));
     }
 });
 
