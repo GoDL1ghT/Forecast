@@ -8,43 +8,43 @@ let isLoaded = false
 let currentMatchId
 
 chrome.runtime.onMessage.addListener((request) => {
-    console.log(request.url);
+    println(request.url);
     if (request.message) {
         if (request.message === "loadmatch") {
-            console.log("Loading...");
+            println("Loading...");
             addListenerToRun(async () => {
                 await initialize();
             }).then(() => {
-                console.log("Enabled");
+                println("Enabled");
             }).catch(error => {
-                console.error("Error during activation:", error);
+                error("Error during activation:", error);
             });
         }
         if (request.message === "reload") {
-            console.log("Reloading...");
+            println("Reloading...");
             addListenerToRun(async () => {
                 disable();
                 await initialize();
             }).then(() => {
-                console.log("Enabled");
+                println("Enabled");
             }).catch(error => {
-                console.error("Error during activation:", error);
+                error("Error during activation:", error);
             });
         }
         if (request.message === "disable") {
             addListenerToRun(() => {
                 disable()
             }).then(() => {
-                console.log("Disabled");
+                println("Disabled");
             }).catch(error => {
-                console.error("Disconnection error:", error);
+                error("Disconnection error:", error);
             });
         }
     }
 });
 
 function disable() {
-    console.log("Disabling...");
+    println("Disabling...");
     cachedNodes.forEach((node) => {
         node.remove();
     });
@@ -76,7 +76,7 @@ function addListenerToRun(callback) {
 async function initialize() {
     const matchId = extractMatchId();
     if (isLoaded && currentMatchId === matchId) return
-    console.log("Running...");
+    println("Running...");
     const enabled = await isExtensionEnabled();
     if (!enabled) return;
     const apiKey = await getApiKey();
@@ -90,10 +90,10 @@ async function initialize() {
             currentMatchId = matchId
             isLoaded = true;
         } catch (error) {
-            console.error("Error when retrieving match statistics: " + error.message);
+            error("Error when retrieving match statistics: " + error.message);
         }
     } else {
-        console.log("Please enter your API Key in the settings!");
+        println("Please enter your API Key in the settings!");
     }
 }
 
@@ -126,7 +126,7 @@ class TeamWinRateCalculator {
     async insertHtmlToTeamCard(filePath, targetElement) {
         const response = await fetch(chrome.runtime.getURL(filePath));
         if (!response.ok) {
-            console.error(`HTTP error! Status: ${response.status}`);
+            error(`HTTP error! Status: ${response.status}`);
             return null;
         }
 
@@ -204,7 +204,7 @@ class TeamWinRateCalculator {
 
     printPlayerStats(playerId, playerStats) {
         if (!playerStats) {
-            console.log(`Player stats not found!`);
+            println(`Player stats ${playerId} not found!`);
             return;
         }
 
@@ -228,7 +228,7 @@ class TeamWinRateCalculator {
         const matchStats = await this.fetchMatchStats(matchId);
 
         if (!matchStats || !matchStats.match_id) {
-            console.error("Error when retrieving match statistics: Incorrect match structure.");
+            error("Error when retrieving match statistics: Incorrect match structure.");
         }
 
         await this.displayWinRates(matchStats);
@@ -247,7 +247,7 @@ class TeamWinRateCalculator {
         });
 
         if (!response.ok) {
-            console.error("Error when requesting player data: Error when receiving data");
+            error("Error when requesting player data: Error when receiving data");
         }
         const newStats = response.json();
         playerGamesDataCache.set(playerId, newStats);
@@ -266,7 +266,7 @@ class TeamWinRateCalculator {
         });
 
         if (!response.ok) {
-            console.error("Error when requesting player data: Error when receiving data");
+            error("Error when requesting player data: Error when receiving data");
         }
 
         const newStats = response.json();
@@ -281,8 +281,6 @@ class TeamWinRateCalculator {
         const currentCountry = extractLanguage();
         const match = player.faceit_url.match(/\/players\/[^/]+/);
         const playerLink = "/" + currentCountry + match[0];
-
-        console.log("Looking for player link:", playerLink);
 
         function isUniqueNode(node) {
             const playerAnchor = node.querySelector(`a[href="${playerLink}"]`);
@@ -396,7 +394,7 @@ class TeamWinRateCalculator {
             });
             observer.observe(document.body, {attributes: true, childList: true, subtree: true});
             registeredObservers.set("info-table", observer);
-            console.log("Registering observer for INFO-TABLE");
+            println("Registering observer for INFO-TABLE");
         }
     }
 }
@@ -418,7 +416,6 @@ async function observerCallback(calculator, mutationsList) {
         if (mutation.type === 'childList') {
             for (const addedNode of mutation.addedNodes) {
                 if (addedNode.nodeType !== Node.ELEMENT_NODE) continue;
-                console.log(addedNode)
                 if (!await handleInfoNode(calculator, addedNode)) continue;
                 found = true;
                 break;

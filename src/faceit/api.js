@@ -1,3 +1,13 @@
+const prefix = "[FORECAST]"
+
+function println(...args) {
+    console.log(prefix + ": " + args.join(" "));
+}
+
+function error(...args) {
+    console.error(prefix + " " + args.join(" "));
+}
+
 async function getApiKey() {
     const settings = await chrome.storage.sync.get(['apiKey']);
     return settings.apiKey || '';

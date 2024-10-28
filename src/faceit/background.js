@@ -1,8 +1,3 @@
-chrome.runtime.onInstalled.addListener(() => {
-    console.log('Faceit Stats Extension установлен!');
-});
-console.log("Background script is running.");
-
 let previousUrl = "";
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

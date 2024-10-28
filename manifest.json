@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "FACEIT Forecast",
+  "name": "FACEIT FORECAST",
   "version": "1.0",
-  "description": "Удобное расширение для подробной статистики на Faceit",
+  "description": "A convenient extension for detailed statistics on Faceit.",
   "permissions": [
     "storage",
     "tabs",
