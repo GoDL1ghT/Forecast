@@ -3,6 +3,7 @@
   "name": "FACEIT FORECAST",
   "version": "1.0",
   "description": "A convenient extension for detailed statistics on Faceit.",
+  "default_locale": "en",
   "permissions": [
     "storage",
     "tabs",
