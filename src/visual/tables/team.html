@@ -1,69 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        .team-background-table {
-            display: flex;
-            justify-content: space-between;
-            padding: 20px;
-            background: transparent;
-        }
+<style>
+    .team-background-table {
+        display: flex;
+        justify-content: space-between;
+        padding: 20px 0 3px;
+        background: transparent;
+    }
 
-        .team-container {
-            width: 48%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
+    .team-container {
+        width: 48%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
 
-        #roster1, #roster2 {
-            width: 100%;
-            background: rgb(28, 28, 28);
-            border-radius: 8px;
-            border-collapse: collapse;
-            overflow: hidden;
-            position: relative;
-        }
+    .team-background-table #roster1, .team-background-table #roster2 {
+        width: 100%;
+        background: rgb(28, 28, 28);
+        border-radius: 8px;
+        border-collapse: collapse;
+        overflow: hidden;
+        position: relative;
+    }
 
-        .team-name {
-            display: inline-block;
-            text-align: center;
-            background: rgb(37, 37, 37);
-            color: white;
-            border-radius: 8px 8px 0 0;
-            padding: 10px 20px;
-            font-weight: bold;
-            margin: 0;
-            z-index: 2;
-            position: relative;
-        }
+    .team-name {
+        display: inline-block;
+        text-align: center;
+        background: rgb(37, 37, 37);
+        color: white;
+        border-radius: 8px 8px 0 0;
+        padding: 10px 20px;
+        font-weight: bold;
+        margin: 0;
+        z-index: 2;
+        position: relative;
+    }
 
-        th, td {
-            border: none;
-            text-align: center;
-            color: white;
-            padding: 10px;
-            background: transparent;
-            box-shadow: none;
-        }
+    .team-background-table th, .team-background-table td {
+        border: none;
+        text-align: center;
+        color: white;
+        padding: 10px;
+        background: transparent;
+        box-shadow: none;
+    }
 
-        th {
-            position: relative;
-            background-color: rgb(37, 37, 37);
-        }
+    .team-background-table th {
+        position: relative;
+        background-color: rgb(37, 37, 37);
+    }
 
-        td {
-            vertical-align: middle;
-        }
-    </style>
+    .team-background-table td {
+        vertical-align: middle;
+    }
+</style>
 
-
-    <title></title>
-</head>
-<body>
 <div class="team-background-table">
     <div class="team-container">
         <div class="team-name" id="roster1-name"></div>
@@ -95,5 +86,3 @@
         </table>
     </div>
 </div>
-</body>
-</html>

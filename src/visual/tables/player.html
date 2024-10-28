@@ -1,54 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        .player-background-table {
-            display: flex;
-            justify-content: center; /* Центрируем элементы */
-            padding: 20px;
-            background: transparent;
-        }
+<style>
+    .player-background-table {
+        display: flex;
+        justify-content: center; /* Центрируем элементы */
+        padding-top: 17px;
+        background: transparent;
+    }
 
-        .player-container {
-            width: 48%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            margin: 0 10px; /* Добавляем немного отступа */
-        }
+    .player-background-table .player-container {
+        width: 100%; /* Растягиваем контейнер на 100% ширины родителя */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
 
-        .player-table {
-            width: 100%;
-            background: rgb(28, 28, 28);
-            border-radius: 8px;
-            border-collapse: collapse;
-            overflow: hidden;
-        }
+    .player-background-table .player-table {
+        width: 100%; /* Растягиваем таблицу на 100% ширины контейнера */
+        height: 100%; /* Указываем высоту таблицы на 100% */
+        background: rgb(28, 28, 28);
+        border-radius: 4px;
+        border-collapse: collapse;
+        overflow: hidden;
+    }
 
-        th, td {
-            border: none;
-            text-align: center;
-            color: white;
-            padding: 10px;
-            background: transparent;
-            box-shadow: none;
-        }
+    .player-background-table th,
+    .player-background-table td {
+        width: 100%;
+        height: 100%;
+        border: none;
+        text-align: center;
+        color: white;
+        padding: 10px;
+        background: transparent;
+        box-shadow: none;
+    }
 
-        th {
-            position: relative;
-            background-color: rgb(37, 37, 37);
-        }
+    .player-background-table th {
+        position: relative;
+        background-color: rgb(37, 37, 37);
+    }
 
-        td {
-            vertical-align: middle;
-        }
-    </style>
-    <title></title>
-</head>
-<body>
+    .player-background-table td {
+        vertical-align: middle;
+    }
+
+    /* Дополнительный стиль для родительского элемента таблицы, чтобы задать высоту */
+    .player-background-table .player-container {
+        height: 100%; /* Убедитесь, что контейнер занимает всю доступную высоту */
+    }
+</style>
+
 <div class="player-background-table">
     <div class="player-container">
         <table class="player-table" id="player-table">
@@ -64,5 +65,3 @@
         </table>
     </div>
 </div>
-</body>
-</html>

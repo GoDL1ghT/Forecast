@@ -1,30 +1,63 @@
-chrome.runtime.onMessage.addListener((request) => {
-    if (request.message) {
-        if (request.message === "loadmatch-8642") {
-            initialize();
-        }
-    }
-});
-
-let registeredObservers = new LimitedMap(20);
+let registeredObservers = new LimitedMap(100);
 let matchDataCache = new LimitedMap(5);
 let playerDataCache = new LimitedMap(50);
 let playerGamesDataCache = new LimitedMap(50);
 let isLoaded = false
+let currentMatchId
+
+chrome.runtime.onMessage.addListener((request) => {
+    if (request.message) {
+        if (request.message === "loadmatch") {
+            console.log("loading...");
+            addListenerToRun(async () => {
+                console.log("running...");
+                await initialize();
+            }).then(() => {
+                console.log("Enabled");
+            }).catch(error => {
+                console.error("Ошибка при активации:", error);
+            });
+        }
+        if (request.message === "disable") {
+            addListenerToRun(() => {
+                isLoaded = false;
+                currentMatchId = undefined;
+            }).then(() => {
+                console.log("Disabled");
+            }).catch(error => {
+                console.error("Ошибка при отключении:", error);
+            });
+        }
+    }
+});
+
+function addListenerToRun(callback) {
+    return new Promise((resolve) => {
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", () => {
+                callback().then(resolve);
+            });
+        } else {
+            // Если DOM уже загружен, вызываем callback немедленно
+            callback().then(resolve);
+        }
+    });
+}
 
 async function initialize() {
-    if (isLoaded) return
+    const matchId = extractMatchId();
+    if (isLoaded && currentMatchId === matchId) return
     const enabled = await isExtensionEnabled();
     if (!enabled) return;
     const apiKey = await getApiKey();
 
     if (apiKey) {
-        const matchId = extractMatchId();
         const calculator = new TeamWinRateCalculator(apiKey);
 
         try {
             if (!matchId) return;
             await calculator.getMatchWinRates(matchId);
+            currentMatchId = matchId
             isLoaded = true;
         } catch (error) {
             console.error("Ошибка при получении статистики матча: " + error.message);
@@ -142,7 +175,7 @@ class TeamWinRateCalculator {
             .sort(([, {wins: winsA, totalGames: totalA}], [, {wins: winsB, totalGames: totalB}]) =>
                 (winsB / totalB) - (winsA / totalA))
             .forEach(([mapName, {totalGames, wins}]) => {
-                const winrate = ((wins / totalGames) * 100).toFixed(2);
+                const winrate = ((wins / totalGames) * 100).toFixed(0);
                 addRow(`player-table-${playerId}`, mapName, totalGames, winrate);
             });
     }
@@ -203,13 +236,16 @@ class TeamWinRateCalculator {
     }
 
     async findUserCard(playerId, callback) {
-        if (registeredObservers.has(playerId)) return
+        if (registeredObservers.has(playerId)) return;
 
         const player = await this.getPlayerStats(playerId);
         const currentCountry = extractLanguage();
         const match = player.faceit_url.match(/\/players\/[^/]+/);
         const playerLink = "/" + currentCountry + match[0];
 
+        console.log("Looking for player link:", playerLink); // Для отладки, можно убрать в рабочем коде
+
+        // Функция проверки, уникален ли узел
         function isUniqueNode(node) {
             const playerAnchor = node.querySelector(`a[href="${playerLink}"]`);
             const isProcessed = node.hasAttribute('data-processed');
@@ -218,19 +254,34 @@ class TeamWinRateCalculator {
 
         const observer = new MutationObserver((mutationsList) => {
             for (const mutation of mutationsList) {
-                if (mutation.type !== 'attributes') continue;
-                const targetNode = mutation.target;
-                if (!targetNode.matches('[class*="UserCard__Container"]')) continue;
-                if (!isUniqueNode(targetNode)) continue;
-                targetNode.setAttribute('data-processed', 'true');
-                callback(targetNode);
-                break;
+                let found = false
+                if (mutation.type === 'childList') {
+                    for (const node of mutation.addedNodes) {
+                        if (found) break
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.matches('[class*="UserCard__Container"]') || node.querySelector('[class*="UserCard__Container"]')) {
+                                const targetNode = node.matches('[class*="UserCard__Container"]') ? node : node.querySelector('[class*="UserCard__Container"]');
+                                if (isUniqueNode(targetNode)) {
+                                    targetNode.setAttribute('data-processed', 'true');
+                                    callback(targetNode);
+                                    found = true
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (found) break
             }
         });
 
-        observer.observe(document.body, {attributes: true, childList: false, subtree: true});
+        observer.observe(document.body, {
+            childList: true,
+            attributes: true,
+            subtree: true,
+        });
 
-        registeredObservers.set(playerId, observer)
+        registeredObservers.set(playerId, observer);
     }
 
 
@@ -299,23 +350,22 @@ class TeamWinRateCalculator {
         await Promise.all([...team1Promises, ...team2Promises]);
 
         const element = document.querySelector(`[name="info"][class*="Overview__Column"]`);
-        if (element) {
-            await handleInfoNode(this, element);
-        } else {
-            if (registeredObservers.has("info-table")) return
-            const observer = new MutationObserver((mutationsList) => {
-                observerCallback(this, mutationsList);
-            });
-            observer.observe(document.body, {attributes: true, childList: false, subtree: true});
-            registeredObservers.set("info-table", observer);
-            console.log("Registering observer for INFO-TABLE");
-        }
+        if (element) await handleInfoNode(this, element);
+        if (registeredObservers.has("info-table")) return
+        const observer = new MutationObserver((mutationsList) => {
+            observerCallback(this, mutationsList);
+        });
+        observer.observe(document.body, {attributes: true, childList: true, subtree: true});
+        registeredObservers.set("info-table", observer);
+        console.log("Registering observer for INFO-TABLE");
     }
 }
 
-async function handleInfoNode(calculator, targetNode) {
-    if (targetNode.hasAttribute('data-processed')) return false;
-    if (targetNode.getAttribute('name') !== 'info' || !targetNode.matches('[class*="Overview__Column"]')) return false;
+async function handleInfoNode(calculator, node) {
+    if (node.hasAttribute('data-processed')) return false;
+    if (node.getAttribute('name') !== 'info') return false;
+    if (!node.matches('[class*="Overview__Column"]') || node.querySelector('[class*="Overview__Column"]')) return false;
+    const targetNode = node.matches('[class*="Overview__Column"]') ? node : node.querySelector('[class*="Overview__Column"]');
 
     targetNode.setAttribute('data-processed', 'true');
     await calculator.printResults(targetNode);
@@ -324,19 +374,22 @@ async function handleInfoNode(calculator, targetNode) {
 
 async function observerCallback(calculator, mutationsList) {
     for (const mutation of mutationsList) {
-        if (mutation.type === 'attributes') {
-            const targetNode = mutation.target;
-            if (!await handleInfoNode(calculator, targetNode)) continue;
-            break;
-        }
-
+        let found = false
         if (mutation.type === 'childList') {
             for (const addedNode of mutation.addedNodes) {
                 if (addedNode.nodeType !== Node.ELEMENT_NODE) continue;
                 if (!await handleInfoNode(calculator, addedNode)) continue;
+                found = true;
                 break;
             }
         }
+        if (mutation.type === 'attributes') {
+            if (found) break
+            const targetNode = mutation.target;
+            if (!await handleInfoNode(calculator, targetNode)) continue;
+            break;
+        }
+        if (found) break
     }
 }
 
