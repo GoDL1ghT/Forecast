@@ -1,5 +1,6 @@
 async function popupLoad() {
-    const enabled = await isExtensionEnabled();
+    const settings = await chrome.storage.sync.get(['isEnabled']);
+    const enabled = settings.isEnabled !== undefined ? settings.isEnabled : true;
     const toggleExtension = document.getElementById('toggleExtension');
 
     if (toggleExtension) {
@@ -14,8 +15,10 @@ async function popupLoad() {
 }
 
 async function loadSettings() {
-    const settings = await chrome.storage.sync.get(['apiKey', 'isEnabled']);
+    const settings = await chrome.storage.sync.get(['apiKey', 'isEnabled', 'sliderValue']);
     const apiKeyInput = document.getElementById('apiKeyInput');
+    const rangeSlider = document.getElementById('rangeSlider');
+    const sliderValueDisplay = document.getElementById('sliderValue');
 
     if (apiKeyInput) {
         apiKeyInput.value = settings.apiKey || '';
@@ -29,35 +32,24 @@ async function loadSettings() {
     } else {
         console.error("Toggle switch not found during load settings!");
     }
+
+    if (rangeSlider && sliderValueDisplay) {
+        const sliderValue = settings.sliderValue !== undefined ? settings.sliderValue : 5;
+        rangeSlider.value = sliderValue;
+        sliderValueDisplay.textContent = sliderValue
+    } else {
+        console.error("Range slider not found during load settings!");
+    }
 }
 
 async function saveSettings() {
     const apiKey = document.getElementById('apiKeyInput').value;
     const isEnabled = document.getElementById('toggleExtension').checked;
+    const sliderValue = parseInt(document.getElementById('rangeSlider').value, 10);
 
-    chrome.storage.sync.set({apiKey, isEnabled}, () => {
-        console.log('The settings have been saved:', {apiKey, isEnabled});
-        showSaveMessage();
-    });
+    await chrome.storage.sync.set({apiKey, isEnabled, sliderValue});
+    console.log("The settings have been saved:", {apiKey, isEnabled, sliderValue});
 }
-
-function showSaveMessage() {
-    const saveMessage = document.getElementById('saveMessage');
-    saveMessage.classList.add('show');
-
-    setTimeout(() => {
-        saveMessage.classList.remove('show');
-    }, 2000);
-}
-
-document.getElementById('saveSettings').addEventListener('click', (event) => {
-    saveSettings();
-    event.currentTarget.classList.add('active');
-
-    setTimeout(() => {
-        event.currentTarget.classList.remove('active');
-    }, 200);
-});
 
 document.addEventListener("DOMContentLoaded", async () => {
     await loadSettings();
@@ -65,11 +57,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const toggleExtension = document.getElementById('toggleExtension');
     if (toggleExtension) {
-        toggleExtension.addEventListener('change', function () {
+        toggleExtension.addEventListener('change', async function () {
             const isEnabled = this.checked;
-            chrome.storage.sync.set({isEnabled}, () => {
-                console.log('Extension enabled:', isEnabled);
-            });
+            await chrome.storage.sync.set({isEnabled});
+            console.log('Extension enabled:', isEnabled);
+        });
+    }
+
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    if (apiKeyInput) {
+        apiKeyInput.addEventListener('input', async function () {
+            await saveSettings();
+            console.log('API Key changed:', this.value);
+        });
+    }
+
+    const rangeSlider = document.getElementById('rangeSlider');
+    const sliderValueDisplay = document.getElementById('sliderValue');
+
+    if (rangeSlider && sliderValueDisplay) {
+        rangeSlider.addEventListener('input', async function () {
+            sliderValueDisplay.textContent = this.value;
+            await saveSettings();
         });
     }
 });

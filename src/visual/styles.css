@@ -11,7 +11,7 @@ body {
     border-radius: 15px;
     padding: 20px;
     width: 350px;
-    height: auto;
+    height: 220px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
@@ -112,6 +112,67 @@ button:hover {
     transition: .4s;
     border-radius: 50%;
 }
+
+/* Range slider container styling for inline layout */
+.slider-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Inline label for the range slider */
+.slider-container label {
+    font-size: 1rem;
+    color: #ffffff;
+}
+
+/* Range slider styling */
+.range-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 6px;
+    background: #959595;
+    border-radius: 5px;
+    outline: none;
+    transition: background 0.3s;
+    margin: 0 1px; /* Spacing around the slider */
+}
+
+.range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background-color: #fd4400;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.range-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background-color: #fd4400;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.limit-label {
+    font-size: 1rem;
+    margin-top: 1px;
+    display: inline-block;
+}
+
+/* Styling for the displayed slider value */
+#sliderValue {
+    font-size: 1rem;
+    color: #ffffff;
+    min-width: 30px; /* Ensure space for value display */
+    text-align: right;
+}
+
 
 input:checked + .slider {
     background-color: #ff4500;

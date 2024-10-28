@@ -226,11 +226,27 @@ class TeamWinRateCalculator {
         await this.displayWinRates(matchStats);
     }
 
+    async getSliderValue() {
+        return new Promise((resolve, reject) => {
+            chrome.storage.sync.get(['sliderValue'], (result) => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError));
+                } else {
+                    // Значение слайдера может быть undefined, если оно не было установлено
+                    const sliderValue = result.sliderValue !== undefined ? result.sliderValue : 5; // 5 - значение по умолчанию
+                    resolve(sliderValue);
+                }
+            });
+        });
+    }
+
     async getPlayerGameStats(playerId) {
         const cachedStats = playerGamesDataCache.get(playerId);
+        const sliderValue = await this.getSliderValue();
+
         if (cachedStats) return cachedStats;
 
-        const url = `https://open.faceit.com/data/v4/players/${playerId}/games/cs2/stats?limit=20`;
+        const url = `https://open.faceit.com/data/v4/players/${playerId}/games/cs2/stats?limit=${sliderValue}`;
 
         const response = await fetch(url, {
             headers: {

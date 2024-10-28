@@ -23,7 +23,11 @@
             <label for="apiKeyInput">API Key:</label>
             <input type="text" id="apiKeyInput" placeholder="API Key"/>
         </div>
-        <button id="saveSettings">Save</button>
+        <div class="setting-item slider-container">
+            <span class="limit-label">Limit:</span>
+            <input type="range" id="rangeSlider" class="range-slider" min="5" max="100" value="5">
+            <span id="sliderValue">5</span>
+        </div>
         <div id="matchStats"></div>
         <div id="saveMessage" class="save-message">The settings have been saved!</div>
     </div>

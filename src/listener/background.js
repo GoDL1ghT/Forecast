@@ -11,6 +11,13 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
+// В фоновом скрипте
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "popupClosed") {
+        chrome.runtime.sendMessage({ action: "popupClosed" });
+    }
+});
+
 function tryEnableMatchRoom(tabId,url) {
     const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/cs2\/room\/[0-9a-zA-Z\-]+(\/.*)?$/;
     const match = url.match(regex);
