@@ -100,8 +100,32 @@ const matchHistoryModule = new Module("matchhistory",async () => {
             await data.setupStatsToNode();
         }));
     })
-},async () => {
 
+    setTimeout(() => {
+        let observer = registeredObservers.get("stats-table-node-observer")
+        if (observer) {
+            observer.disconnect()
+            registeredObservers.delete("stats-table-node-observer")
+        }
+    }, 10000)
+},async () => {
+    matchDatas.forEach((data) => {
+        data.node.remove()
+    })
+    matchDatas.length = 0;
+    cachedNodes.forEach((node) => {
+        node.remove()
+    })
+    cachedNodes.length = 0
+    processedNodes.forEach((node) => {
+        node.removeAttribute('data-processed')
+    });
+    processedNodes.length = 0;
+    let observer = registeredObservers.get("stats-table-node-observer")
+    if (observer) {
+        observer.disconnect()
+        registeredObservers.delete("stats-table-node-observer")
+    }
 })
 
 async function scanPlayerStatistic() {
@@ -148,6 +172,8 @@ function doAfterTableNodeAppear(callback) {
 
     const observer = new MutationObserver((mutationsList) => {
         if (matchDatas.length >= 30) {
+            println("Observer disconnected")
+            registeredObservers.delete("stats-table-node-observer")
             observer.disconnect()
             return
         }
