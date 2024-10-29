@@ -179,8 +179,8 @@ function doAfterTableNodeAppear(callback) {
             observer.disconnect()
             return
         }
+        let found = false
         for (const mutation of mutationsList) {
-            let found = false
             if (mutation.type === 'childList') {
                 for (const node of mutation.addedNodes) {
                     if (found) break
