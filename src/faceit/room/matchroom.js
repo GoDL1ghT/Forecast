@@ -164,49 +164,6 @@ class TeamWinRateCalculator {
             });
         });
     }
-
-    async getPlayerGameStats(playerId) {
-        const cachedStats = playerGamesDataCache.get(playerId);
-        const sliderValue = await this.getSliderValue();
-
-        if (cachedStats) return cachedStats;
-
-        const url = `https://open.faceit.com/data/v4/players/${playerId}/games/cs2/stats?limit=${sliderValue}`;
-
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${this.apiKey}`
-            }
-        });
-
-        if (!response.ok) {
-            error("Error when requesting player data: Error when receiving data");
-        }
-        const newStats = response.json();
-        playerGamesDataCache.set(playerId, newStats);
-        return newStats;
-    }
-
-    async getPlayerStats(playerId) {
-        const cachedStats = playerDataCache.get(playerId);
-        if (cachedStats) return cachedStats;
-        const url = `https://open.faceit.com/data/v4/players/${playerId}`;
-
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${this.apiKey}`
-            }
-        });
-
-        if (!response.ok) {
-            error("Error when requesting player data: Error when receiving data");
-        }
-
-        const newStats = response.json();
-        playerDataCache.set(playerId, newStats)
-        return newStats;
-    }
-
     async findUserCard(playerId, callback) {
         if (registeredObservers.has(playerId)) return;
 
