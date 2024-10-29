@@ -1,0 +1,65 @@
+<style>
+    .fc-score-table {
+        display: flex;
+        justify-content: flex-start;
+        background: transparent;
+        width: auto; /* Позволяет таблице занимать необходимую ширину */
+    }
+
+    .fc-score-table .fc-score-table-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    .fc-score-table .inner-score-table {
+        background: transparent;
+        overflow: hidden;
+        table-layout: auto; /* Позволяет ячейкам менять размер в зависимости от содержимого */
+    }
+
+    .fc-score-table th,
+    .fc-score-table td {
+        text-align: center;
+        color: white;
+        padding-left: 2px;
+        padding-right: 2px;
+        background: transparent;
+        box-shadow: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .fc-score-table th {
+        padding-top: 4px;
+        padding-bottom: 0;
+        position: relative;
+        background-color: transparent;
+    }
+
+    .fc-score-table td {
+        padding-top: 0;
+        padding-bottom: 4px;
+        vertical-align: middle;
+    }
+</style>
+
+<div class="fc-score-table">
+    <div class="fc-score-table-container">
+        <table class="inner-score-table" id="fc-score-table">
+            <thead>
+            <tr>
+                <th style="width: 60px; padding-left: 0;">SCORE</th> <!-- Ширина для SCORE -->
+                <th style="width: 40px;">HLTV 2.0</th> <!-- Ширина для HLTV 2.0 -->
+                <th style="width: 60px;">K/D</th> <!-- Ширина для K/D -->
+                <th style="width: 80px;">KD/KR</th> <!-- Ширина для KD/KR -->
+                <th style="width: 30px;">ADR</th> <!-- Ширина для ADR -->
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,42 +1,23 @@
-let registeredObservers = new LimitedMap(100);
-let matchDataCache = new LimitedMap(5);
-let playerDataCache = new LimitedMap(50);
-let playerGamesDataCache = new LimitedMap(50);
 let cachedNodes = [];
 let processedNodes = [];
-let isLoaded = false
 let currentMatchId
 
-chrome.runtime.onMessage.addListener((request) => {
-    const handleMessage = async (action) => {
-        switch (action) {
-            case "loadmatch":
-                println("Loading...");
-                await initialize();
-                println("Enabled");
-                break;
-            case "reload":
-                println("Reloading...");
-                disable();
-                await initialize();
-                println("Enabled");
-                break;
-            case "disable":
-                disable();
-                println("Disabled");
-                break;
-            default:
-                println("Unknown action:", action);
-        }
-    }
+const matchRoomModule = new Module("matchroom",async () => {
+    const matchId = extractMatchId();
+    if (currentMatchId === matchId) return
+    const enabled = await isExtensionEnabled();
+    if (!enabled) return;
 
-    if (request.message) {
-        addListenerToRun(() => handleMessage(request.message));
-    }
-});
+    const calculator = new TeamWinRateCalculator();
 
-function disable() {
-    println("Disabling...");
+    try {
+        if (!matchId) return;
+        await calculator.getMatchWinRates(matchId);
+        currentMatchId = matchId
+    } catch (err) {
+        error("Error when retrieving match statistics: " + err.message);
+    }
+},async () => {
     cachedNodes.forEach((node) => {
         node.remove();
     });
@@ -49,70 +30,14 @@ function disable() {
         observer.disconnect();
     })
     registeredObservers.clear();
-    isLoaded = false;
-    currentMatchId = undefined;
-}
+    currentMatchId = null;
+})
 
-function addListenerToRun(callback) {
-    return new Promise((resolve) => {
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", () => {
-                callback().then(resolve);
-            });
-        } else {
-            callback().then(resolve);
-        }
-    });
-}
-
-async function initialize() {
-    const matchId = extractMatchId();
-    if (isLoaded && currentMatchId === matchId) return
-    println("Running...");
-    const enabled = await isExtensionEnabled();
-    if (!enabled) return;
-    const apiKey = await getApiKey();
-
-    if (apiKey) {
-        const calculator = new TeamWinRateCalculator(apiKey);
-
-        try {
-            if (!matchId) return;
-            await calculator.getMatchWinRates(matchId);
-            currentMatchId = matchId
-            isLoaded = true;
-        } catch (error) {
-            error("Error when retrieving match statistics: " + error.message);
-        }
-    } else {
-        println("Please enter your API Key in the settings!");
-    }
-}
+moduleListener(matchRoomModule);
 
 class TeamWinRateCalculator {
-    constructor(apiKey) {
-        this.apiKey = apiKey;
-        this.baseUrl = "https://open.faceit.com/data/v4";
+    constructor() {
         this.results = new Map();
-    }
-
-    async fetchMatchStats(matchId) {
-        const matchDataCached = matchDataCache.get(matchId)
-        if (matchDataCached) return matchDataCached;
-
-        const url = `${this.baseUrl}/matches/${matchId}`;
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${this.apiKey}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Error when retrieving match statistics: ${response.statusText}`);
-        }
-        const newMatchData = await response.json()
-        matchDataCache.set(matchId, newMatchData);
-        return newMatchData;
     }
 
     async insertHtmlToTeamCard(filePath, targetElement) {
@@ -217,7 +142,7 @@ class TeamWinRateCalculator {
             throw new Error("Match ID is not provided!");
         }
 
-        const matchStats = await this.fetchMatchStats(matchId);
+        const matchStats = await fetchMatchStats(matchId);
 
         if (!matchStats || !matchStats.match_id) {
             error("Error when retrieving match statistics: Incorrect match structure.");
@@ -285,7 +210,7 @@ class TeamWinRateCalculator {
     async findUserCard(playerId, callback) {
         if (registeredObservers.has(playerId)) return;
 
-        const player = await this.getPlayerStats(playerId);
+        const player = await getPlayerStatsById(playerId);
         const currentCountry = extractLanguage();
         const match = player.faceit_url.match(/\/players\/[^/]+/);
         const playerLink = "/" + currentCountry + match[0];
@@ -331,7 +256,7 @@ class TeamWinRateCalculator {
 
 
     async calculateStats(team, playerId) {
-        const data = await this.getPlayerGameStats(playerId);
+        const data = await getPlayerGameStats(playerId);
 
         if (!data.items || data.items.length === 0) {
             return;
@@ -366,7 +291,7 @@ class TeamWinRateCalculator {
         });
 
         await this.findUserCard(playerId, async userCardElement => {
-            const existingTable = userCardElement.querySelector('.player-background-table');
+            const existingTable = userCardElement.querySelector('.fc-score-table');
             if (!existingTable) {
                 await this.insertHtmlToPlayerCard('src/visual/tables/player.html', playerId, userCardElement);
 

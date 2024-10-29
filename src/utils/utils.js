@@ -1,16 +1,11 @@
 const prefix = "[FORECAST]"
 
 function println(...args) {
-    console.log(prefix + ": " + args.join(" "));
+    console.log('%c[%cFORE%cCAST%c]:', 'color: white; background-color: black;', 'color: orange; font-weight: bold; background-color: black;', 'color: white; font-weight: bold; background-color: black;', 'color: white; background-color: black;',args.join(" "));
 }
 
 function error(...args) {
     console.error(prefix + " " + args.join(" "));
-}
-
-async function getApiKey() {
-    const settings = await chrome.storage.sync.get(['apiKey']);
-    return settings.apiKey || '';
 }
 
 async function isExtensionEnabled() {

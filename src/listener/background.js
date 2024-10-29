@@ -1,36 +1,45 @@
-let previousUrl = "";
+let previousUrl = null;
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url) {
-
         const currentUrl = tab.url;
 
-        tryEnableMatchRoom(tabId,currentUrl)
+        tryEnableMatchRoomModule(tabId,currentUrl)
+        tryEnableMatchHistoryModule(tabId,currentUrl)
 
         previousUrl = currentUrl;
     }
 });
 
-// В фоновом скрипте
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "popupClosed") {
-        chrome.runtime.sendMessage({ action: "popupClosed" });
-    }
-});
-
-function tryEnableMatchRoom(tabId,url) {
+function tryEnableMatchRoomModule(tabId,url) {
     const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/cs2\/room\/[0-9a-zA-Z\-]+(\/.*)?$/;
     const match = url.match(regex);
     const module = "matchroom"
 
     if (match) {
-        if (previousUrl === url) {
-            sendMessage(tabId, {message: "loadmatch", module: module});
-        } else {
+        if (previousUrl && previousUrl !== url) {
             sendMessage(tabId, {message: "reload", module: module});
+        } else {
+            sendMessage(tabId, {message: "load", module: module});
         }
     } else {
-        sendMessage(tabId, {message: "disable", module: module});
+        sendMessage(tabId, {message: "unload", module: module});
+    }
+}
+
+function tryEnableMatchHistoryModule(tabId,url) {
+    const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)(\/.*)?$/;
+    const match = url.match(regex);
+    const module = "matchhistory"
+
+    if (match) {
+        if (previousUrl && previousUrl !== url) {
+            sendMessage(tabId, {message: "reload", module: module});
+        } else {
+            sendMessage(tabId, {message: "load", module: module});
+        }
+    } else {
+        sendMessage(tabId, {message: "unload", module: module});
     }
 }
 

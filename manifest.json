@@ -30,7 +30,11 @@
       ],
       "js": [
         "src/utils/utils.js",
-        "src/faceit/room/matchroom.js"
+        "src/faceit/api/api.js",
+        "src/module/module.js",
+
+        "src/faceit/room/matchroom.js",
+        "src/faceit/history/matchhistory.js"
       ]
     }
   ],
@@ -38,6 +42,7 @@
     {
       "resources": [
         "src/visual/tables/team.html",
+        "src/visual/tables/matchscore.html",
         "src/visual/tables/player.html"
       ],
       "matches": [
