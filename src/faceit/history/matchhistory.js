@@ -87,6 +87,8 @@ function insertRow(node,score, raiting, kd, kdkr, adr) {
 const playerNickName = extractPlayerNick();
 
 const matchHistoryModule = new Module("matchhistory",async () => {
+    const enabled = await isExtensionEnabled();
+    if (!enabled) return;
     doAfterTableNodeAppear(async (node) => {
         const tableRows = node.querySelectorAll("tr[class*='styles__MatchHistoryTableRow']");
         const rowsArray = Array.from(tableRows);
