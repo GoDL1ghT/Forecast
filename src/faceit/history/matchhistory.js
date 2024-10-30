@@ -7,12 +7,11 @@ class MatchNodeByMatchStats {
         this.rounds = 0
         this.score = ""
     }
-//KAST = (Kills + Assists + Survived + Traded) / Total Rounds * 100%
+
     async setupStatsToNode() {
         this.node.setAttribute("data-processed", "true");
         if (!this.matchStats) return
         let stats = this.matchStats;
-        // Преобразуем строки в числа
         let kills = parseInt(stats["Kills"], 10);
         let assists = parseInt(stats["Assists"], 10);
         let deaths = parseInt(stats["Deaths"], 10);
@@ -36,28 +35,12 @@ class MatchNodeByMatchStats {
             0.1587
         ).toFixed(2);
 
-        await insertStatsIntoNode(this.node, this.score.replace(/\s+/g, ''), rating,`${kills}/${deaths}`, `${kdratio}/${krratio}`, adr)
+        insertStatsIntoNode(this.node, this.score.replace(/\s+/g, ''), rating,`${kills}/${deaths}`, `${kdratio}/${krratio}`, adr)
     }
 }
 
-async function getHTMLCodeFromFile(filePath) {
-    const response = await fetch(chrome.runtime.getURL(filePath));
-    if (!response.ok) {
-        error(`HTTP error! Status: ${response.status}`);
-        return null;
-    }
-
-    const htmlContent = await response.text();
-
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
-
-    cachedNodes.push(tempDiv);
-    return tempDiv
-}
-
-async function insertStatsIntoNode(root,score, raiting, kd, kdkr, adr) {
-    let myNewNode = await getHTMLCodeFromFile('src/visual/tables/matchscore.html');
+function insertStatsIntoNode(root,score, raiting, kd, kdkr, adr) {
+    let myNewNode = getHtmlResource("src/visual/tables/matchscore.html").cloneNode(true)
     let fourthNode = root?.children[3];
     if (fourthNode && fourthNode.children.length === 1) {
         let singleChild = fourthNode.children[0];
@@ -83,8 +66,6 @@ function insertRow(node,score, raiting, kd, kdkr, adr) {
     kdkrCell.innerHTML = kdkr;
     adrCell.innerHTML = adr;
 }
-
-const playerNickName = extractPlayerNick();
 
 const matchHistoryModule = new Module("matchhistory",async () => {
     const enabled = await isExtensionEnabled();
@@ -131,6 +112,7 @@ const matchHistoryModule = new Module("matchhistory",async () => {
 })
 
 async function scanPlayerStatistic() {
+    let playerNickName = extractPlayerNick();
     const playerData = await getPlayerStatsByNickName(playerNickName);
     const playerId = playerData.player_id;
     const playerGameDatas = await getPlayerGameStats(playerId, 30);
@@ -209,16 +191,6 @@ function doAfterTableNodeAppear(callback) {
     });
 
     registeredObservers.set("stats-table-node-observer", observer);
-}
-
-function extractPlayerNick() {
-    const nick = window.location.href.match(/players\/([a-zA-Z0-9-]+)/);
-    return nick ? nick[1] : null;
-}
-
-function extractGameType() {
-    const match = window.location.href.match(/stats\/([a-zA-Z0-9]+)/);
-    return match ? match[1] : null;
 }
 
 moduleListener(matchHistoryModule);

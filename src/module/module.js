@@ -49,11 +49,11 @@ class Module {
 }
 
 function moduleListener(module) {
-    chrome.runtime.onMessage.addListener((request) => {
+    chrome.runtime.onMessage.addListener(async (request) => {
         if (request.module !== module.name) return;
 
         if (request.message) {
-            module.produceOf(request.message).then(() => {});
+            await module.produceOf(request.message);
         }
     });
 }

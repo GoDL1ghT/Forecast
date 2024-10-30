@@ -40,47 +40,22 @@ class TeamWinRateCalculator {
         this.results = new Map();
     }
 
-    async insertHtmlToTeamCard(filePath, targetElement) {
-        const response = await fetch(chrome.runtime.getURL(filePath));
-        if (!response.ok) {
-            error(`HTTP error! Status: ${response.status}`);
-            return null;
-        }
-
-        const htmlContent = await response.text();
+    insertHtmlToTeamCard(url, targetElement) {
+        let htmlResource = getHtmlResource(url).cloneNode(true)
         const firstChildWithClass = targetElement.querySelector('[class]');
-
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlContent;
-
-        if (firstChildWithClass) {
-            firstChildWithClass.insertAdjacentElement('afterend', tempDiv);
-        }
-        cachedNodes.push(tempDiv);
+        firstChildWithClass.insertAdjacentElement('afterend', htmlResource);
+        cachedNodes.push(htmlResource);
     }
 
-    async insertHtmlToPlayerCard(filePath, playerId, targetNode) {
-        const response = await fetch(chrome.runtime.getURL(filePath));
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        let htmlContent = await response.text();
-
-        htmlContent = htmlContent.replace(/id="player-table"/g, `id="player-table-${playerId}"`);
-
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlContent;
-
-        targetNode.insertAdjacentElement('beforeend', tempDiv);
-
-        cachedNodes.push(tempDiv);
+    insertHtmlToPlayerCard(filePath, playerId, targetNode) {
+        let htmlResource = getHtmlResource(filePath).cloneNode(true);
+        targetNode.insertAdjacentElement('beforeend', htmlResource);
+        document.getElementById("player-table").id = `player-table-${playerId}`
+        cachedNodes.push(htmlResource);
     }
-
 
     async printResults(targetNode) {
-        await this.insertHtmlToTeamCard('src/visual/tables/team.html', targetNode);
+        this.insertHtmlToTeamCard('src/visual/tables/team.html', targetNode);
         const printPromises = [];
 
         this.results.forEach((teamMap, teamName) => {
@@ -250,7 +225,7 @@ class TeamWinRateCalculator {
         await this.findUserCard(playerId, async userCardElement => {
             const existingTable = userCardElement.querySelector('.fc-score-table');
             if (!existingTable) {
-                await this.insertHtmlToPlayerCard('src/visual/tables/player.html', playerId, userCardElement);
+                this.insertHtmlToPlayerCard('src/visual/tables/player.html', playerId, userCardElement);
 
                 const playerStats = teamMap.get(playerId);
                 if (playerStats) {

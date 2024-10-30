@@ -115,6 +115,17 @@ async function getPlayerStatsByNickName(nickname) {
     return newStats;
 }
 
+function extractPlayerNick() {
+    const nick = window.location.href.match(/players\/([a-zA-Z0-9-]+)/);
+    return nick ? nick[1] : null;
+}
+
+function extractGameType() {
+    const match = window.location.href.match(/stats\/([a-zA-Z0-9]+)/);
+    return match ? match[1] : null;
+}
+
+
 async function getApiKey() {
     const settings = await chrome.storage.sync.get(['apiKey']);
     return settings.apiKey || '';

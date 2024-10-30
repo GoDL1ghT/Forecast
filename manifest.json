@@ -33,9 +33,11 @@
         "src/faceit/api/api.js",
         "src/module/module.js",
 
+        "src/faceit/resources/resources.js",
         "src/faceit/room/matchroom.js",
         "src/faceit/history/matchhistory.js",
-        "src/faceit/ranking/ranking.js"
+        "src/faceit/ranking/ranking.js",
+        "src/faceit/ranking/elo-bar.js"
       ]
     }
   ],
@@ -45,6 +47,7 @@
         "src/visual/tables/team.html",
         "src/visual/tables/matchscore.html",
         "src/visual/tables/level-progress-table.html",
+        "src/visual/tables/elo-progress-bar.html",
         "src/visual/tables/player.html",
         "src/visual/tables/levels/level1.html",
         "src/visual/tables/levels/level2.html",

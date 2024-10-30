@@ -1,14 +1,26 @@
 let previousUrl = null;
+let resourcesIsLoaded = false
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url) {
         const currentUrl = tab.url;
 
-        tryEnableMatchRoomModule(tabId,currentUrl)
-        tryEnableMatchHistoryModule(tabId,currentUrl)
-        tryEnableRankingModule(tabId,currentUrl)
+        sendMessage(tabId, {message: "load", module: "resources"});
 
-        previousUrl = currentUrl;
+        waitForResourcesToLoad().then(() => {
+            tryEnableEloBarModule(tabId, currentUrl)
+            tryEnableMatchRoomModule(tabId, currentUrl);
+            tryEnableMatchHistoryModule(tabId, currentUrl);
+            tryEnableRankingModule(tabId, currentUrl);
+
+            previousUrl = currentUrl;
+        });
+    }
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.message === "resourcesLoaded") {
+        resourcesIsLoaded = true
     }
 });
 
@@ -28,8 +40,24 @@ function tryEnableMatchRoomModule(tabId,url) {
     }
 }
 
+function tryEnableEloBarModule(tabId,url) {
+    const regex = /^https:\/\/www\.faceit\.com\/.*$/;
+    const match = url.match(regex);
+    const module = "elobar"
+
+    if (match) {
+        if (previousUrl && previousUrl !== url) {
+            sendMessage(tabId, {message: "reload", module: module});
+        } else {
+            sendMessage(tabId, {message: "load", module: module});
+        }
+    } else {
+        sendMessage(tabId, {message: "unload", module: module});
+    }
+}
+
 function tryEnableMatchHistoryModule(tabId,url) {
-    const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)(\/.*)?$/;
+    const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/;
     const match = url.match(regex);
     const module = "matchhistory"
 
@@ -45,7 +73,7 @@ function tryEnableMatchHistoryModule(tabId,url) {
 }
 
 function tryEnableRankingModule(tabId,url) {
-    const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)(\/.*)?$/;
+    const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/;
     const match = url.match(regex);
     const module = "ranking"
 
@@ -62,4 +90,19 @@ function tryEnableRankingModule(tabId,url) {
 
 function sendMessage(tabId, object) {
     chrome.tabs.sendMessage(tabId, object)
+}
+
+function waitForResourcesToLoad() {
+    return new Promise(resolve => {
+        if (resourcesIsLoaded) {
+            resolve();
+        } else {
+            const interval = setInterval(() => {
+                if (resourcesIsLoaded) {
+                    clearInterval(interval);
+                    resolve();
+                }
+            }, 100);
+        }
+    });
 }

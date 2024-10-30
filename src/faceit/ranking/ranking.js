@@ -1,5 +1,3 @@
-const gameType = extractGameType()
-
 const levelRanges = [
     { min: 1, max: 500 },    // Level 1
     { min: 501, max: 750 },  // Level 2
@@ -23,11 +21,26 @@ const levelRanges = [
     { min: 4501, max: Infinity } // Level 20
 ];
 
+function insertAllLevelsToTable(currentLevel) {
+    levelIcons.forEach((icon, level) => {
+        const node = document.getElementById(`level-node-${level}`);
+        const span = node.getElementsByTagName("span")[0];
+        span.replaceWith(icon);
+        if (level === currentLevel) {
+            let svgNode = icon.cloneNode(true)
+            let svgSpan = svgNode.getElementsByTagName("span")[0];
+            svgSpan.style.width = "36px";
+            svgSpan.style.height = "36px";
+            document.getElementById("current-level").getElementsByTagName("span")[0].replaceWith(svgNode);
+        }
+    })
+}
+
 const rankingModule = new Module("ranking", async () => {
     const enabled = await isExtensionEnabled();
     if (!enabled) return;
     doAfterStatisticNodeAppear(async (node) => {
-        node.replaceWith(await getHTMLCodeFromFile("src/visual/tables/level-progress-table.html"));
+        await node.replaceWith(getHtmlResource("src/visual/tables/level-progress-table.html").cloneNode(true));
         await insertAllStatisticToNewTable();
     })
 }, async () => {
@@ -35,44 +48,18 @@ const rankingModule = new Module("ranking", async () => {
 })
 
 async function insertAllStatisticToNewTable() {
-    const promises = [];
-
+    let gameType = extractGameType()
+    let playerNickName = extractPlayerNick();
     let playerStatistic = await getPlayerStatsByNickName(playerNickName);
     let gameStats = playerStatistic["games"][gameType];
     let elo = parseInt(gameStats["faceit_elo"], 10);
     let [currentLevel,progressBarPercentage] = getBarProgress(elo);
 
-    for (let level = 1; level <= 20; level++) {
-        const node = document.getElementById(`level-node-${level}`);
-
-        const span = node.getElementsByTagName("span")[0];
-        promises.push(
-            getHTMLCodeFromFile(`src/visual/tables/levels/level${level}.html`).then(html => {
-                span.replaceWith(html);
-                if (level === currentLevel) {
-                    let svgNode = html.cloneNode(true)
-                    let svgSpan = svgNode.getElementsByTagName("span")[0];
-                    svgSpan.style.width = "36px";
-                    svgSpan.style.height = "36px";
-                    document.getElementById("current-level").getElementsByTagName("span")[0].replaceWith(svgNode);
-                }
-            })
-        );
-    }
-    await Promise.all(promises);
+    insertAllLevelsToTable(currentLevel)
 
     document.getElementById("current-elo").innerText = `${elo}`
-
     document.getElementById("elo-need-to-reach").innerText = `${currentLevel === levelRanges.length ? "" : levelRanges[currentLevel].min - elo}`
     document.getElementById("elo-need-to-reach-text").innerText = `${currentLevel === levelRanges.length ? "You reached max level!" : `Points needed to reach level ${currentLevel + 1}`}`
-
-    //todo Тут нужно будет сделать код, но в другом файле, который будет искать все свг иконки и заменять их на новые лвла
-    // let targetHref = `https://www.faceit.com/${extractLanguage()}/players/${playerNickName}/stats/${gameType}`
-    // console.log(targetHref)
-    // let upperElobar = Array.from(document.querySelectorAll(`a[href="${targetHref}"]`))
-    //     .filter(link => link.querySelector("svg") !== null)[0];
-    // console.log(upperElobar)
-    //todo Тут нужно будет сделать код, но в другом файле, который будет искать все свг иконки и заменять их на новые лвла
 
     for (let level = 1; level <= levelRanges.length; level++) {
         const levelNode = document.getElementById(`level-node-${level}`);
@@ -112,7 +99,7 @@ function getBarProgress(elo) {
     if (nextLevel) {
         const currentMin = currentRange.min;
         const currentMax = currentRange.max;
-        progressPercentage = currentMin / currentMax * 100;
+        progressPercentage = (elo - currentMin) / (currentMax - currentMin) * 100;
     } else {
         progressPercentage = 100;
     }
