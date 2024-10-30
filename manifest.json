@@ -34,7 +34,8 @@
         "src/module/module.js",
 
         "src/faceit/room/matchroom.js",
-        "src/faceit/history/matchhistory.js"
+        "src/faceit/history/matchhistory.js",
+        "src/faceit/ranking/ranking.js"
       ]
     }
   ],
@@ -43,10 +44,31 @@
       "resources": [
         "src/visual/tables/team.html",
         "src/visual/tables/matchscore.html",
-        "src/visual/tables/player.html"
+        "src/visual/tables/level-progress-table.html",
+        "src/visual/tables/player.html",
+        "src/visual/tables/levels/level1.html",
+        "src/visual/tables/levels/level2.html",
+        "src/visual/tables/levels/level3.html",
+        "src/visual/tables/levels/level4.html",
+        "src/visual/tables/levels/level5.html",
+        "src/visual/tables/levels/level6.html",
+        "src/visual/tables/levels/level7.html",
+        "src/visual/tables/levels/level8.html",
+        "src/visual/tables/levels/level9.html",
+        "src/visual/tables/levels/level10.html",
+        "src/visual/tables/levels/level11.html",
+        "src/visual/tables/levels/level12.html",
+        "src/visual/tables/levels/level13.html",
+        "src/visual/tables/levels/level14.html",
+        "src/visual/tables/levels/level15.html",
+        "src/visual/tables/levels/level16.html",
+        "src/visual/tables/levels/level17.html",
+        "src/visual/tables/levels/level18.html",
+        "src/visual/tables/levels/level19.html",
+        "src/visual/tables/levels/level20.html"
       ],
       "matches": [
-        "<all_urls>"
+        "https://www.faceit.com/*"
       ]
     }
   ]

@@ -6,6 +6,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
         tryEnableMatchRoomModule(tabId,currentUrl)
         tryEnableMatchHistoryModule(tabId,currentUrl)
+        tryEnableRankingModule(tabId,currentUrl)
 
         previousUrl = currentUrl;
     }
@@ -31,6 +32,22 @@ function tryEnableMatchHistoryModule(tabId,url) {
     const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)(\/.*)?$/;
     const match = url.match(regex);
     const module = "matchhistory"
+
+    if (match) {
+        if (previousUrl && previousUrl !== url) {
+            sendMessage(tabId, {message: "reload", module: module});
+        } else {
+            sendMessage(tabId, {message: "load", module: module});
+        }
+    } else {
+        sendMessage(tabId, {message: "unload", module: module});
+    }
+}
+
+function tryEnableRankingModule(tabId,url) {
+    const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)(\/.*)?$/;
+    const match = url.match(regex);
+    const module = "ranking"
 
     if (match) {
         if (previousUrl && previousUrl !== url) {

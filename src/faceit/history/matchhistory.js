@@ -40,7 +40,7 @@ class MatchNodeByMatchStats {
     }
 }
 
-async function createTableFromHTML(filePath) {
+async function getHTMLCodeFromFile(filePath) {
     const response = await fetch(chrome.runtime.getURL(filePath));
     if (!response.ok) {
         error(`HTTP error! Status: ${response.status}`);
@@ -57,7 +57,7 @@ async function createTableFromHTML(filePath) {
 }
 
 async function insertStatsIntoNode(root,score, raiting, kd, kdkr, adr) {
-    let myNewNode = await createTableFromHTML('src/visual/tables/matchscore.html', root);
+    let myNewNode = await getHTMLCodeFromFile('src/visual/tables/matchscore.html');
     let fourthNode = root?.children[3];
     if (fourthNode && fourthNode.children.length === 1) {
         let singleChild = fourthNode.children[0];
@@ -214,6 +214,11 @@ function doAfterTableNodeAppear(callback) {
 function extractPlayerNick() {
     const nick = window.location.href.match(/players\/([a-zA-Z0-9-]+)/);
     return nick ? nick[1] : null;
+}
+
+function extractGameType() {
+    const match = window.location.href.match(/stats\/([a-zA-Z0-9]+)/);
+    return match ? match[1] : null;
 }
 
 moduleListener(matchHistoryModule);
