@@ -7,7 +7,6 @@ This project is a browser extension that retrieves and displays statistics for F
 - Fetch match statistics.
 - Display win rates for teams in a match.
 - Calculate player stats and display them on user cards.
-- Observe DOM mutations to dynamically update the UI.
 - Introduced new Faceit Skill Levels with a more detailed breakdown by elo.
 - Display specific statistics in match history (Score, HLTV 2.0 rating, K/D, K/R, ADR)
 
