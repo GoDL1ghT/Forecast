@@ -1,4 +1,4 @@
-# Faceit Matchroom Stats
+# Faceit Forecast
 
 This project is a browser extension that retrieves and displays statistics for Faceit matches and players. It includes features such as retrieving match statistics, calculating player statistics, displaying win rates and advanced match statistics.
 
