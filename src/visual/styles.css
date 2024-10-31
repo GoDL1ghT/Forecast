@@ -1,43 +1,66 @@
 body {
-    background-color: #2b2b2b;
-    color: #ffffff;
+    background-color: #161616;
+    color: #FFFFFF;
     font-family: 'Arial', sans-serif;
     padding: 20px;
     margin: 0;
 }
 
 .container {
-    border: 2px solid #ff4500;
+    border: 2px solid #FF4500;
     border-radius: 15px;
     padding: 20px;
     width: 350px;
-    height: 220px;
+    height: auto;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
 .extension-title {
     text-align: center;
     font-size: 35px;
-    color: #ffffff;
-    margin: 5px 0 20px 0;
+    font-weight: bold;
+    color: #FFFFFF;
+    margin: 5px 0;
 }
 
 h1 {
-    color: #ff4500;
+    color: #FF4500;
     text-align: left;
     margin-bottom: 15px;
     font-size: 18px;
 }
 
+/* Hiding inactive categories */
+/* Separating categories */
+.settings-category {
+    display: none;
+    background-color: #333;
+    border-radius: 5px;
+    margin-bottom: 2px;
+    border: 1px solid #444;
+}
+
+.settings-category.active-category {
+    display: block;
+}
+
 .setting-item {
-    margin: 10px 0;
+    margin: 5px 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 5px 10px;
+}
+
+.setting-item:not(:last-child) {
+    border-bottom: 1px solid #444;
+}
+
+.setting-item:last-child {
+    margin-bottom: 1px;
 }
 
 label {
-    margin-bottom: 5px;
     font-size: 16px;
     flex-shrink: 0;
     margin-right: 10px;
@@ -46,34 +69,49 @@ label {
 input[type="text"] {
     width: 100%;
     padding: 10px;
-    border: 1px solid #ff4500;
+    border: 1px solid #FF4500;
     border-radius: 5px;
     background-color: #333333;
-    color: #ffffff;
+    color: #FFFFFF;
     transition: border-color 0.3s;
+    margin-bottom: 4px;
 }
 
 input[type="text"]:focus {
-    border-color: #ff8800;
+    border-color: #FF8800;
     outline: none;
 }
 
-button {
-    background-color: #ff4500;
-    color: #ffffff;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 23px;
-    transition: background-color 0.3s;
-    display: block;
-    width: 100%;
+/* Styles for tabs */
+.tabs {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    gap: 10px;
 }
 
-button:hover {
-    background-color: #ed6530;
+.tab-button {
+    background-color: #303030;
+    color: #FFF;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 1em;
+    font-weight: bold;
+    text-align: center;
+    border: none;
+    border-radius: 5px;
+    flex: 1;
+}
+
+.tab-button:hover {
+    background-color: #504F4F;
+}
+
+.tab-button.active {
+    background-color: #FFA500;
+    color: #1E1E1E;
 }
 
 .switch {
@@ -81,6 +119,7 @@ button:hover {
     display: inline-block;
     width: 60px;
     height: 34px;
+    margin: 0;
 }
 
 .switch input {
@@ -96,18 +135,21 @@ button:hover {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: #CCC;
     transition: .4s;
     border-radius: 34px;
+    height: 20px; /* Высота слайдера */
+    width: 78%; /* Уменьшенная ширина слайдера */
+    margin: auto; /* Центрируем слайдер по горизонтали */
 }
 
 .slider:before {
     position: absolute;
     content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
+    height: 20px; /* Высота ползунка */
+    width: 20px; /* Ширина ползунка */
+    left: 0; /* Устанавливаем позицию в начало */
+    bottom: 0; /* Поднимаем ползунок, чтобы он соответствовал новой высоте */
     background-color: white;
     transition: .4s;
     border-radius: 50%;
@@ -118,14 +160,14 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    width: 100%;
+    gap: 15px;
+    padding: 10px;
 }
 
 /* Inline label for the range slider */
 .slider-container label {
     font-size: 1rem;
-    color: #ffffff;
+    color: #FFFFFF;
 }
 
 /* Range slider styling */
@@ -134,11 +176,11 @@ button:hover {
     appearance: none;
     flex: 1;
     height: 6px;
+    width: 100%;
     background: #959595;
     border-radius: 5px;
     outline: none;
     transition: background 0.3s;
-    margin: 0 1px; /* Spacing around the slider */
 }
 
 .range-slider::-webkit-slider-thumb {
@@ -146,7 +188,7 @@ button:hover {
     appearance: none;
     width: 18px;
     height: 18px;
-    background-color: #fd4400;
+    background-color: #FD4400;
     border-radius: 50%;
     cursor: pointer;
 }
@@ -154,45 +196,27 @@ button:hover {
 .range-slider::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    background-color: #fd4400;
+    background-color: #FD4400;
     border-radius: 50%;
     cursor: pointer;
 }
 
 .limit-label {
     font-size: 1rem;
-    margin-top: 1px;
     display: inline-block;
 }
 
 /* Styling for the displayed slider value */
 #sliderValue {
     font-size: 1rem;
-    color: #ffffff;
-    min-width: 30px; /* Ensure space for value display */
-    text-align: right;
+    color: #FFFFFF;
+    text-align: left;
 }
 
-
 input:checked + .slider {
-    background-color: #ff4500;
+    background-color: #FF4500;
 }
 
 input:checked + .slider:before {
     transform: translateX(26px);
-}
-
-.save-message {
-    display: none;
-    background-color: #4caf50;
-    color: white;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 5px;
-    text-align: center;
-    transition: opacity 0.5s;
-}
-
-.save-message.show {
-    display: block;
 }

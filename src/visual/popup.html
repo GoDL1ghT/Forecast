@@ -3,34 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings</title>
+    <title>Настройки</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="popup.js"></script>
 </head>
 <body>
 <div class="container">
     <h2 class="extension-title">FORECAST</h2>
-    <h1>Settings</h1>
-    <div class="settings-box">
+
+    <!-- Вкладки для категорий -->
+    <div class="tabs">
+        <button class="tab-button active" data-tab="general">General</button>
+        <button class="tab-button" data-tab="appearance">Appearance</button>
+        <button class="tab-button" data-tab="visual">Visual</button>
+    </div>
+
+    <!-- Категория "General" -->
+    <div id="general" class="settings-category active-category">
         <div class="setting-item">
-            <label for="toggleExtension">Status:</label>
+            <label for="toggleExtension">Status</label>
             <label class="switch">
                 <input type="checkbox" id="toggleExtension">
                 <span class="slider"></span>
             </label>
         </div>
         <div class="setting-item">
-            <label for="apiKeyInput">API Key:</label>
-            <input type="text" id="apiKeyInput" placeholder="API Key"/>
+            <label for="apiKeyInput">API Key</label>
+            <input type="text" id="apiKeyInput" placeholder="API Key">
         </div>
         <div class="setting-item slider-container">
-            <span class="limit-label">Limit:</span>
-            <input type="range" id="rangeSlider" class="range-slider" min="5" max="100" value="5">
-            <span id="sliderValue">5</span>
+            <span class="limit-label">Limit</span>
+            <input type="range" id="rangeSlider" class="range-slider" min="5" max="100" value="20">
+            <span id="sliderValue">20</span>
         </div>
-        <div id="matchStats"></div>
-        <div id="saveMessage" class="save-message">The settings have been saved!</div>
     </div>
+
+    <!-- Категория "Appearance" -->
+    <div id="appearance" class="settings-category">
+        <div class="setting-item">
+            <label for="test1">Setting 1:</label>
+            <label class="switch">
+                <input type="checkbox" id="test1">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Категория "Visual" -->
+    <div id="visual" class="settings-category">
+        <div class="setting-item">
+            <label for="test2">Setting 2:</label>
+            <label class="switch">
+                <input type="checkbox" id="test2">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+    <div id="matchStats"></div>
 </div>
 </body>
 </html>

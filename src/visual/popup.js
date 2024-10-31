@@ -81,4 +81,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             await saveSettings();
         });
     }
+
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const categories = document.querySelectorAll('.settings-category');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            categories.forEach(category => category.classList.remove('active-category'));
+
+            button.classList.add('active');
+            document.getElementById(button.getAttribute('data-tab')).classList.add('active-category');
+        });
+    });
 });
