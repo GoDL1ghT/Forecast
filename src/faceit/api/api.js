@@ -84,6 +84,31 @@ function extractGameType() {
 
 
 async function getApiKey() {
-    const settings = await chrome.storage.sync.get(['apiKey']);
-    return settings.apiKey || '';
+    let apiKey = getCookie("forecast-api-key")
+    if (!apiKey) {
+        let data = await fetch("https://raw.githubusercontent.com/GoDL1ghT/Forecast/refs/heads/master/api-key")
+        apiKey = await data.text()
+        setCookie("forecast-api-key", apiKey, 5)
+    }
+    return apiKey
 }
+
+function setCookie(name, value, minutes) {
+    const date = new Date();
+    date.setTime(date.getTime() + (minutes * 60 * 1000)); // Устанавливаем время истечения в миллисекундах
+    const expires = "expires=" + date.toUTCString();
+    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/;domain=.faceit.com;secure";
+}
+
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEQ) === 0) {
+            return decodeURIComponent(cookie.substring(nameEQ.length));
+        }
+    }
+    return null;
+}
+
