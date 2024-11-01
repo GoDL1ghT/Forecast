@@ -15,16 +15,9 @@ async function popupLoad() {
 }
 
 async function loadSettings() {
-    const settings = await chrome.storage.sync.get(['apiKey', 'isEnabled', 'sliderValue']);
-    const apiKeyInput = document.getElementById('apiKeyInput');
+    const settings = await chrome.storage.sync.get(['isEnabled', 'sliderValue']);
     const rangeSlider = document.getElementById('rangeSlider');
     const sliderValueDisplay = document.getElementById('sliderValue');
-
-    if (apiKeyInput) {
-        apiKeyInput.value = settings.apiKey || '';
-    } else {
-        console.error("API Key input not found!");
-    }
 
     const toggleExtension = document.getElementById('toggleExtension');
     if (toggleExtension) {
@@ -43,12 +36,11 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-    const apiKey = document.getElementById('apiKeyInput').value;
     const isEnabled = document.getElementById('toggleExtension').checked;
     const sliderValue = parseInt(document.getElementById('rangeSlider').value, 10);
 
-    await chrome.storage.sync.set({apiKey, isEnabled, sliderValue});
-    console.log("The settings have been saved:", {apiKey, isEnabled, sliderValue});
+    await chrome.storage.sync.set({isEnabled, sliderValue});
+    console.log("The settings have been saved:", {isEnabled, sliderValue});
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -61,14 +53,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             const isEnabled = this.checked;
             await chrome.storage.sync.set({isEnabled});
             console.log('Extension enabled:', isEnabled);
-        });
-    }
-
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    if (apiKeyInput) {
-        apiKeyInput.addEventListener('input', async function () {
-            await saveSettings();
-            console.log('API Key changed:', this.value);
         });
     }
 

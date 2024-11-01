@@ -7,7 +7,7 @@ body {
 }
 
 .container {
-    border: 2px solid #FF4500;
+    border: 2px solid #ff5500;
     border-radius: 15px;
     padding: 20px;
     width: 350px;
@@ -24,19 +24,16 @@ body {
 }
 
 h1 {
-    color: #FF4500;
+    color: #ff5500;
     text-align: left;
     margin-bottom: 15px;
     font-size: 18px;
 }
 
-/* Hiding inactive categories */
-/* Separating categories */
 .settings-category {
     display: none;
     background-color: #333;
     border-radius: 5px;
-    margin-bottom: 2px;
     border: 1px solid #444;
 }
 
@@ -45,19 +42,15 @@ h1 {
 }
 
 .setting-item {
-    margin: 5px 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 5px 10px;
+    min-height: 30px;
 }
 
 .setting-item:not(:last-child) {
     border-bottom: 1px solid #444;
-}
-
-.setting-item:last-child {
-    margin-bottom: 1px;
 }
 
 label {
@@ -69,7 +62,7 @@ label {
 input[type="text"] {
     width: 100%;
     padding: 10px;
-    border: 1px solid #FF4500;
+    border: 1px solid #ff5500;
     border-radius: 5px;
     background-color: #333333;
     color: #FFFFFF;
@@ -82,7 +75,6 @@ input[type="text"]:focus {
     outline: none;
 }
 
-/* Styles for tabs */
 .tabs {
     display: flex;
     justify-content: space-around;
@@ -110,7 +102,7 @@ input[type="text"]:focus {
 }
 
 .tab-button.active {
-    background-color: #FFA500;
+    background-color: #ff7300;
     color: #1E1E1E;
 }
 
@@ -118,7 +110,6 @@ input[type="text"]:focus {
     position: relative;
     display: inline-block;
     width: 60px;
-    height: 34px;
     margin: 0;
 }
 
@@ -131,46 +122,39 @@ input[type="text"]:focus {
 .slider {
     position: absolute;
     cursor: pointer;
-    top: 0;
-    left: 0;
     right: 0;
     bottom: 0;
     background-color: #CCC;
     transition: .4s;
     border-radius: 34px;
-    height: 20px; /* Высота слайдера */
-    width: 78%; /* Уменьшенная ширина слайдера */
-    margin: auto; /* Центрируем слайдер по горизонтали */
+    height: 20px;
+    width: 78%;
 }
 
 .slider:before {
     position: absolute;
     content: "";
-    height: 20px; /* Высота ползунка */
-    width: 20px; /* Ширина ползунка */
-    left: 0; /* Устанавливаем позицию в начало */
-    bottom: 0; /* Поднимаем ползунок, чтобы он соответствовал новой высоте */
+    height: 20px;
+    width: 20px;
+    left: 0;
+    bottom: 0;
     background-color: white;
     transition: .4s;
     border-radius: 50%;
 }
 
-/* Range slider container styling for inline layout */
 .slider-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 15px;
-    padding: 10px;
 }
 
-/* Inline label for the range slider */
 .slider-container label {
     font-size: 1rem;
     color: #FFFFFF;
 }
 
-/* Range slider styling */
 .range-slider {
     -webkit-appearance: none;
     appearance: none;
@@ -188,7 +172,7 @@ input[type="text"]:focus {
     appearance: none;
     width: 18px;
     height: 18px;
-    background-color: #FD4400;
+    background-color: #ff5500;
     border-radius: 50%;
     cursor: pointer;
 }
@@ -196,7 +180,7 @@ input[type="text"]:focus {
 .range-slider::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    background-color: #FD4400;
+    background-color: #ff5500;
     border-radius: 50%;
     cursor: pointer;
 }
@@ -206,7 +190,6 @@ input[type="text"]:focus {
     display: inline-block;
 }
 
-/* Styling for the displayed slider value */
 #sliderValue {
     font-size: 1rem;
     color: #FFFFFF;
@@ -214,7 +197,7 @@ input[type="text"]:focus {
 }
 
 input:checked + .slider {
-    background-color: #FF4500;
+    background-color: #ff5500;
 }
 
 input:checked + .slider:before {
