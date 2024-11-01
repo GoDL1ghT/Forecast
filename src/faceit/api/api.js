@@ -6,13 +6,11 @@ const matchDataCache = new LimitedMap(20);
 const matchDataStatsCache = new LimitedMap(20);
 const registeredObservers = new LimitedMap(100);
 
-async function fetchMatchStats(matchId) {
-    const matchDataCached = matchDataCache.get(matchId)
-    if (matchDataCached) return matchDataCached;
+async function fetchData(cache, key, url, errorMsg) {
+    const cachedData = cache.get(key);
+    if (cachedData) return cachedData;
 
     const apiKey = await getApiKey();
-
-    const url = `${baseUrl}/matches/${matchId}`;
     const response = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${apiKey}`
@@ -20,100 +18,59 @@ async function fetchMatchStats(matchId) {
     });
 
     if (!response.ok) {
-        throw new Error(`Error when retrieving match statistics: ${response.statusText}`);
+        throw new Error(`${errorMsg}: ${response.statusText}`);
     }
-    const newMatchData = await response.json()
-    matchDataCache.set(matchId, newMatchData);
 
-    return newMatchData;
+    const newData = await response.json();
+    cache.set(key, newData);
+    return newData;
+}
+
+async function fetchMatchStats(matchId) {
+    return fetchData(
+        matchDataCache,
+        matchId,
+        `${baseUrl}/matches/${matchId}`,
+        "Error when retrieving match statistics"
+    );
 }
 
 async function fetchMatchStatsDetailed(matchId) {
-    const matchDataCached = matchDataStatsCache.get(matchId)
-    if (matchDataCached) return matchDataCached;
-
-    const apiKey = await getApiKey();
-
-    const url = `${baseUrl}/matches/${matchId}/stats`;
-    const response = await fetch(url, {
-        headers: {
-            'Authorization': `Bearer ${apiKey}`
-        }
-    });
-
-    if (!response.ok) {
-        throw new Error(`Error when retrieving match statistics: ${response.statusText}`);
-    }
-    const newMatchData = await response.json()
-    matchDataStatsCache.set(matchId, newMatchData);
-
-    return newMatchData;
+    return fetchData(
+        matchDataStatsCache,
+        matchId,
+        `${baseUrl}/matches/${matchId}/stats`,
+        "Error when retrieving detailed match statistics"
+    );
 }
 
 async function getPlayerGameStats(playerId, matchAmount = 20) {
-    const cachedStats = playerGamesDataCache.get(playerId);
-    if (cachedStats) return cachedStats;
-
-    const url = `${baseUrl}/players/${playerId}/games/cs2/stats?limit=${matchAmount}`;
-
-    const apiKey = await getApiKey();
-
-    const response = await fetch(url, {
-        headers: {
-            'Authorization': `Bearer ${apiKey}`
-        }
-    });
-
-    if (!response.ok) {
-        error("Error when requesting player data: Error when receiving data");
-    }
-    const newStats = response.json();
-    playerGamesDataCache.set(playerId, newStats);
-    return newStats;
+    return fetchData(
+        playerGamesDataCache,
+        playerId,
+        `${baseUrl}/players/${playerId}/games/cs2/stats?limit=${matchAmount}`,
+        "Error when requesting player game data"
+    );
 }
 
 async function getPlayerStatsById(playerId) {
-    const cachedStats = playerDataCache.get(playerId);
-    if (cachedStats) return cachedStats;
-    const url = `${baseUrl}/players/${playerId}`;
-
-    const apiKey = await getApiKey();
-
-    const response = await fetch(url, {
-        headers: {
-            'Authorization': `Bearer ${apiKey}`
-        }
-    });
-
-    if (!response.ok) {
-        error("Error when requesting player data: Error when receiving data");
-    }
-
-    const newStats = response.json();
-    playerDataCache.set(playerId, newStats)
-    return newStats;
+    return fetchData(
+        playerDataCache,
+        playerId,
+        `${baseUrl}/players/${playerId}`,
+        "Error when requesting player data by ID"
+    );
 }
 
 async function getPlayerStatsByNickName(nickname) {
-    const cachedStats = playerDataCache.get(nickname);
-    if (cachedStats) return cachedStats;
-
-    const url = `${baseUrl}/players?nickname=${encodeURIComponent(nickname)}`;
-    const apiKey = await getApiKey();
-    const response = await fetch(url, {
-        headers: {
-            'Authorization': `Bearer ${apiKey}`
-        }
-    });
-
-    if (!response.ok) {
-        error("Error when requesting player data: " + response.statusText);
-    }
-
-    const newStats = await response.json();
-    playerDataCache.set(nickname, newStats)
-    return newStats;
+    return fetchData(
+        playerDataCache,
+        nickname,
+        `${baseUrl}/players?nickname=${encodeURIComponent(nickname)}`,
+        "Error when requesting player data by nickname"
+    );
 }
+
 
 function extractPlayerNick() {
     const nick = window.location.href.match(/players\/([a-zA-Z0-9-]+)/);
