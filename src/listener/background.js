@@ -1,30 +1,43 @@
 let previousUrl = null;
 let resourcesIsLoaded = false
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url) {
-        const currentUrl = tab.url;
+let registeredBGListeners = []
 
-        sendMessage(tabId, {message: "load", module: "resources"});
+function registerListener(key, callback) {
+    if (registeredBGListeners.includes(key)) return
+    registeredBGListeners.push(key)
+    callback()
+}
 
-        waitForResourcesToLoad().then(() => {
-            tryEnableEloBarModule(tabId, currentUrl)
-            tryEnableMatchRoomModule(tabId, currentUrl);
-            tryEnableMatchHistoryModule(tabId, currentUrl);
-            tryEnableRankingModule(tabId, currentUrl);
+registerListener("tab-listener", () => {
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (changeInfo.status === 'complete' && tab.url) {
+            const currentUrl = tab.url;
 
-            previousUrl = currentUrl;
-        });
-    }
-});
+            sendMessage(tabId, {message: "load", module: "resources"});
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.message === "resourcesLoaded") {
-        resourcesIsLoaded = true
-    }
-});
+            waitForResourcesToLoad().then(() => {
+                tryEnableEloBarModule(tabId, currentUrl)
+                tryEnableMatchRoomModule(tabId, currentUrl);
+                tryEnableMatchHistoryModule(tabId, currentUrl);
+                tryEnableRankingModule(tabId, currentUrl);
 
-function tryEnableMatchRoomModule(tabId,url) {
+                previousUrl = currentUrl;
+            });
+        }
+    })
+})
+
+registerListener("resource-listener", () => {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.message === "resourcesLoaded") {
+            resourcesIsLoaded = true
+        }
+    });
+})
+
+
+function tryEnableMatchRoomModule(tabId, url) {
     const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/cs2\/room\/[0-9a-zA-Z\-]+(\/.*)?$/;
     const match = url.match(regex);
     const module = "matchroom"
@@ -40,7 +53,7 @@ function tryEnableMatchRoomModule(tabId,url) {
     }
 }
 
-function tryEnableEloBarModule(tabId,url) {
+function tryEnableEloBarModule(tabId, url) {
     const regex = /^https:\/\/www\.faceit\.com\/.*$/;
     const match = url.match(regex);
     const module = "elobar"
@@ -56,7 +69,7 @@ function tryEnableEloBarModule(tabId,url) {
     }
 }
 
-function tryEnableMatchHistoryModule(tabId,url) {
+function tryEnableMatchHistoryModule(tabId, url) {
     const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/;
     const match = url.match(regex);
     const module = "matchhistory"
@@ -72,7 +85,7 @@ function tryEnableMatchHistoryModule(tabId,url) {
     }
 }
 
-function tryEnableRankingModule(tabId,url) {
+function tryEnableRankingModule(tabId, url) {
     const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/;
     const match = url.match(regex);
     const module = "ranking"

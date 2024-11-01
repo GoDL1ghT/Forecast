@@ -17,16 +17,14 @@ const elobarmodule = new Module("elobar", async () => {
             let [currentLevel, _] = getBarProgress(elo);
             let newIcon = levelIcons.get(currentLevel).cloneNode(true)
             newIcon.id = "new-elo-level-icon"
-            oldIcon.replaceWith( newIcon)
+            oldIcon.replaceWith(newIcon)
         })
     })
 
     doAfterWidgetEloNodeAppear(async (node)=> {
         node.parentNode.id = "edited-widget"
-        node.remove()
+        // node.remove()
     })
-
-    doAfterNodeAppear()
 
 
 }, async () => {
@@ -37,6 +35,9 @@ async function insertStatsToEloBar(nick) {
     let gameType = "cs2"
     let playerStatistic = await getPlayerStatsByNickName(nick);
     let gameStats = playerStatistic["games"][gameType];
+
+    document.getElementById("user-url").setAttribute("href",`/${extractLanguage()}/players/${nick}/stats/${gameType}`)
+
     let elo = parseInt(gameStats["faceit_elo"], 10);
     let [currentLevel, progressBarPercentage] = getBarProgress(elo);
     let node = document.getElementById("skill-current-level")

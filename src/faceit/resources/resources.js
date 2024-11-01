@@ -1,11 +1,14 @@
 const levelIcons = new Map()
 const htmls = new Map()
+let isResourcesLoaded = false
 
 const resourcesModule = new Module("resources", async () => {
     const enabled = await isExtensionEnabled();
     if (!enabled) return;
+    if (isResourcesLoaded) return
     await loadAllHTMLs();
     await loadLevelIcons();
+    isResourcesLoaded = true
     chrome.runtime.sendMessage({ message: "resourcesLoaded" });
 }, async () => {
 

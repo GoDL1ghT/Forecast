@@ -11,7 +11,10 @@
     "activeTab"
   ],
   "background": {
-    "service_worker": "src/listener/background.js"
+    "service_worker": "src/listener/background.js",
+    "matches": [
+      "https://www.faceit.com/*"
+    ]
   },
   "action": {
     "default_popup": "src/visual/popup.html",
