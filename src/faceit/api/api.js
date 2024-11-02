@@ -72,36 +72,6 @@ async function getPlayerStatsByNickName(nickname) {
     );
 }
 
-async function getCompetitionStats(queueId) {
-    let chachedStats = competitionCache.get(queueId)
-    if (chachedStats) return chachedStats
-    const token = getApiKey();
-    const url = `https://api.faceit.com/queue/v1/queue/matchmaking/${queueId}`;
-    const options = {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-    };
-
-    try {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-            throw new Error(`Ошибка: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        competitionCache.set(queueId, data);
-        return data;
-    } catch (error) {
-        console.error('Ошибка при отправке запроса:', error);
-        return null;
-    }
-}
-
-
 function extractPlayerNick() {
     const nick = window.location.href.match(/players\/([a-zA-Z0-9-]+)/);
     return nick ? nick[1] : null;

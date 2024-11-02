@@ -37,8 +37,9 @@ function insertAllLevelsToTable(currentLevel) {
 }
 
 const rankingModule = new Module("ranking", async () => {
-    const enabled = await isExtensionEnabled();
+    const enabled = await isExtensionEnabled() && await isSettingEnabled("eloranking");
     if (!enabled) return;
+
     doAfterStatisticNodeAppear(async (node) => {
         await node.replaceWith(getHtmlResource("src/visual/tables/level-progress-table.html").cloneNode(true));
         await insertAllStatisticToNewTable();

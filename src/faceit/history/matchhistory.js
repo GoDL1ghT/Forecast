@@ -68,8 +68,9 @@ function insertRow(node,score, raiting, kd, kdkr, adr) {
 }
 
 const matchHistoryModule = new Module("matchhistory",async () => {
-    const enabled = await isExtensionEnabled();
+    const enabled = await isExtensionEnabled() && await isSettingEnabled("matchhistory");
     if (!enabled) return;
+
     doAfterTableNodeAppear(async (node) => {
         const tableRows = node.querySelectorAll("tr[class*='styles__MatchHistoryTableRow']");
         const rowsArray = Array.from(tableRows);

@@ -8,6 +8,24 @@ function error(...args) {
     console.error(prefix + " " + args.join(" "));
 }
 
+async function getSliderValue() {
+    return new Promise((resolve, reject) => {
+        chrome.storage.sync.get(['sliderValue'], (result) => {
+            if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError));
+            } else {
+                const sliderValue = result.sliderValue !== undefined ? result.sliderValue : 20;
+                resolve(sliderValue);
+            }
+        });
+    });
+}
+
+async function isSettingEnabled(name) {
+    const settings = await chrome.storage.sync.get([name]);
+    return settings[name] !== undefined ? settings[name] : true;
+}
+
 async function isExtensionEnabled() {
     const settings = await chrome.storage.sync.get(['isEnabled']);
     return settings.isEnabled !== undefined ? settings.isEnabled : true;

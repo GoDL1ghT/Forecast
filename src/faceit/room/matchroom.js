@@ -3,10 +3,11 @@ let processedNodes = [];
 let currentMatchId
 
 const matchRoomModule = new Module("matchroom",async () => {
+    const enabled = await isExtensionEnabled() && await isSettingEnabled("matchroom");
+    if (!enabled) return;
+
     const matchId = extractMatchId();
     if (currentMatchId === matchId) return
-    const enabled = await isExtensionEnabled();
-    if (!enabled) return;
 
     const calculator = new TeamWinRateCalculator();
 
@@ -282,19 +283,6 @@ async function observerCallback(calculator, mutationsList) {
         }
         if (found) break
     }
-}
-
-async function getSliderValue() {
-    return new Promise((resolve, reject) => {
-        chrome.storage.sync.get(['sliderValue'], (result) => {
-            if (chrome.runtime.lastError) {
-                reject(new Error(chrome.runtime.lastError));
-            } else {
-                const sliderValue = result.sliderValue !== undefined ? result.sliderValue : 20;
-                resolve(sliderValue);
-            }
-        });
-    });
 }
 
 function extractMatchId() {

@@ -1,6 +1,7 @@
 const newLevelsModule = new Module("levels", async () => {
-    const enabled = await isExtensionEnabled();
+    const enabled = await isExtensionEnabled() && await isSettingEnabled("eloranking");
     if (!enabled) return;
+
     doAfterSelfNickNodeAppear(async (nick) => {
         doAfterStatisticBarNodeAppear(nick, async (node) => {
             let newTable = getHtmlResource("src/visual/tables/elo-progress-bar.html").cloneNode(true)
