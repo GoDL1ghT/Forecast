@@ -295,6 +295,43 @@ function doAfterWidgetEloNodeAppear(callback) {
     registeredObservers.set("widget-elo-observer", observer);
 }
 
+function doAfterNickNameCardNodeAppear(callback) {
+    const observer = new MutationObserver(mutationsList => {
+        let node = document.getElementById("player-profilecard-nick-node")
+        if (node) {
+            callback(node)
+            return
+        }
+
+        function checkNodeAndChildren(node) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.matches('[class*="UserStats__StatsContainer-"]')) {
+                    if (lobbyType === "profile") node.id = "player-profilecard-nick-node"
+                    callback(node)
+                    return;
+                }
+                node.childNodes.forEach(checkNodeAndChildren);
+            }
+        }
+
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                for (const node of mutation.addedNodes) {
+                    checkNodeAndChildren(node);
+                }
+            }
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        attributes: true,
+        subtree: true
+    });
+
+    registeredObservers.set("nick-cardnode-observer", observer);
+}
+
 function doAfterNickNameNodeAppear(lobbyType, callback) {
     const observer = new MutationObserver(mutationsList => {
         let counterMax = lobbyType === "matchroom" ? 10 : lobbyType === "lobby" ? 5 : 1
