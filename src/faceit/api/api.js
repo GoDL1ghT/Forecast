@@ -73,12 +73,12 @@ async function getPlayerStatsByNickName(nickname) {
 }
 
 function extractPlayerNick() {
-    const nick = window.location.href.match(/players\/([a-zA-Z0-9-]+)/);
+    const nick = window.location.href.match(/players\/([a-zA-Z0-9-_]+)/);
     return nick ? nick[1] : null;
 }
 
 function extractGameType() {
-    const match = window.location.href.match(/stats\/([a-zA-Z0-9]+)/);
+    const match = window.location.href.match(/stats\/([a-zA-Z0-9-_]+)/);
     return match ? match[1] : null;
 }
 
