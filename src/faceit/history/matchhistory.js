@@ -115,7 +115,7 @@ async function scanPlayerStatistic() {
     let playerNickName = extractPlayerNick();
     const playerData = await getPlayerStatsByNickName(playerNickName);
     const playerId = playerData.player_id;
-    const playerGameDatas = await getPlayerGameStats(playerId, 30);
+    const playerGameDatas = await getPlayerGameStats(playerId, extractGameType(), 30);
     const matchesInfo = playerGameDatas.items
     const filteredMatchDatas = matchDatas.filter((data) => {
         return !data.node.hasAttribute("data-processed")
@@ -150,6 +150,13 @@ function findPlayerByNickname(teams, nickname) {
 }
 
 function doAfterTableNodeAppear(callback) {
+
+    let matchHistoryNode = document.getElementById("match-history-table")
+    if (matchHistoryNode) {
+        callback(matchHistoryNode)
+        return
+    }
+
     function isUniqueNode(node) {
         return !node.hasAttribute('data-processed') && node.querySelector(`tbody`);
     }
@@ -170,6 +177,7 @@ function doAfterTableNodeAppear(callback) {
                         if (node.matches('[class*="styles__MatchHistoryTable-"]') || node.querySelector('[class*="styles__MatchHistoryTable-"]')) {
                             const targetNode = node.matches('[class*="styles__MatchHistoryTable-"]') ? node : node.querySelector('[class*="styles__MatchHistoryTable-"]');
                             if (isUniqueNode(targetNode)) {
+                                targetNode.id = "match-history-table"
                                 targetNode.setAttribute('data-processed', 'true');
                                 processedNodes.push(targetNode);
                                 callback(targetNode);

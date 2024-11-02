@@ -30,18 +30,13 @@ function interpolateColor(color1, color2, factor) {
     return `#${r}${g}${b}`;
 }
 
-class LimitedMap extends Map {
-    constructor(limit) {
-        super();
-        this.limit = limit;
-    }
-
-    set(key, value) {
-        if (this.size >= this.limit) {
-            const firstKey = this.keys().next().value;
-            this.delete(firstKey);
+function doAfter(conditionFn, callback, interval = 50) {
+    const task = setInterval(async () => {
+        if (conditionFn()) {
+            clearInterval(task);
+            await callback();
         }
-        super.set(key, value);
-        return this;
-    }
+    }, interval);
+
+    return () => clearInterval(task);
 }

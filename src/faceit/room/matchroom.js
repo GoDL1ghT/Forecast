@@ -126,19 +126,6 @@ class TeamWinRateCalculator {
         await this.displayWinRates(matchStats);
     }
 
-    async getSliderValue() {
-        return new Promise((resolve, reject) => {
-            chrome.storage.sync.get(['sliderValue'], (result) => {
-                if (chrome.runtime.lastError) {
-                    reject(new Error(chrome.runtime.lastError));
-                } else {
-                    // Значение слайдера может быть undefined, если оно не было установлено
-                    const sliderValue = result.sliderValue !== undefined ? result.sliderValue : 5; // 5 - значение по умолчанию
-                    resolve(sliderValue);
-                }
-            });
-        });
-    }
     async findUserCard(playerId, callback) {
         if (registeredObservers.has(playerId)) return;
 
@@ -188,7 +175,8 @@ class TeamWinRateCalculator {
 
 
     async calculateStats(team, playerId) {
-        const data = await getPlayerGameStats(playerId);
+        const matchAmount = await getSliderValue();
+        let data = await getPlayerGameStats(playerId, "cs2", matchAmount);
 
         if (!data.items || data.items.length === 0) {
             return;
@@ -294,6 +282,19 @@ async function observerCallback(calculator, mutationsList) {
         }
         if (found) break
     }
+}
+
+async function getSliderValue() {
+    return new Promise((resolve, reject) => {
+        chrome.storage.sync.get(['sliderValue'], (result) => {
+            if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError));
+            } else {
+                const sliderValue = result.sliderValue !== undefined ? result.sliderValue : 20;
+                resolve(sliderValue);
+            }
+        });
+    });
 }
 
 function extractMatchId() {

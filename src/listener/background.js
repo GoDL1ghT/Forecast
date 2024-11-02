@@ -9,19 +9,24 @@ function registerListener(key, callback) {
     callback()
 }
 
+const modules = [
+    {regex: /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/, module: "matchhistory"},
+    {regex: /^https:\/\/www\.faceit\.com\/.*$/, module: "levels"},
+    {regex: /^https:\/\/www\.faceit\.com\/[^\/]+\/cs2\/room\/[0-9a-zA-Z\-]+(\/.*)?$/, module: "matchroom"},
+    {regex: /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/, module: "ranking"}
+]
+
 registerListener("tab-listener", () => {
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        console.log(`${changeInfo.status}: ${previousUrl} -> ${tab.url}`)
         if (changeInfo.status === 'complete' && tab.url) {
             const currentUrl = tab.url;
-
-            sendMessage(tabId, {message: "load", module: "resources"});
+            sendMessage(tabId, {action: "load", module: "resources"});
 
             waitForResourcesToLoad().then(() => {
-                tryEnableEloBarModule(tabId, currentUrl)
-                tryEnableMatchRoomModule(tabId, currentUrl);
-                tryEnableMatchHistoryModule(tabId, currentUrl);
-                tryEnableRankingModule(tabId, currentUrl);
-
+                modules.forEach(({regex, module}) => {
+                    produceModuleAction(regex, currentUrl, module, tabId)
+                })
                 previousUrl = currentUrl;
             });
         }
@@ -36,69 +41,10 @@ registerListener("resource-listener", () => {
     });
 })
 
-
-function tryEnableMatchRoomModule(tabId, url) {
-    const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/cs2\/room\/[0-9a-zA-Z\-]+(\/.*)?$/;
+function produceModuleAction(regex, url, module, tabId) {
     const match = url.match(regex);
-    const module = "matchroom"
-
-    if (match) {
-        if (previousUrl && previousUrl !== url) {
-            sendMessage(tabId, {message: "reload", module: module});
-        } else {
-            sendMessage(tabId, {message: "load", module: module});
-        }
-    } else {
-        sendMessage(tabId, {message: "unload", module: module});
-    }
-}
-
-function tryEnableEloBarModule(tabId, url) {
-    const regex = /^https:\/\/www\.faceit\.com\/.*$/;
-    const match = url.match(regex);
-    const module = "elobar"
-
-    if (match) {
-        if (previousUrl && previousUrl !== url) {
-            sendMessage(tabId, {message: "reload", module: module});
-        } else {
-            sendMessage(tabId, {message: "load", module: module});
-        }
-    } else {
-        sendMessage(tabId, {message: "unload", module: module});
-    }
-}
-
-function tryEnableMatchHistoryModule(tabId, url) {
-    const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/;
-    const match = url.match(regex);
-    const module = "matchhistory"
-
-    if (match) {
-        if (previousUrl && previousUrl !== url) {
-            sendMessage(tabId, {message: "reload", module: module});
-        } else {
-            sendMessage(tabId, {message: "load", module: module});
-        }
-    } else {
-        sendMessage(tabId, {message: "unload", module: module});
-    }
-}
-
-function tryEnableRankingModule(tabId, url) {
-    const regex = /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/;
-    const match = url.match(regex);
-    const module = "ranking"
-
-    if (match) {
-        if (previousUrl && previousUrl !== url) {
-            sendMessage(tabId, {message: "reload", module: module});
-        } else {
-            sendMessage(tabId, {message: "load", module: module});
-        }
-    } else {
-        sendMessage(tabId, {message: "unload", module: module});
-    }
+    let action = match ? (previousUrl && previousUrl !== url ? "reload" : "load") : "unload";
+    sendMessage(tabId, {action: action, module: module});
 }
 
 function sendMessage(tabId, object) {

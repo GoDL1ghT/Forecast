@@ -1,10 +1,11 @@
 const baseUrl = "https://open.faceit.com/data/v4";
 
-const playerDataCache = new LimitedMap(50);
-const playerGamesDataCache = new LimitedMap(50);
-const matchDataCache = new LimitedMap(20);
-const matchDataStatsCache = new LimitedMap(20);
-const registeredObservers = new LimitedMap(100);
+const playerDataCache = new Map();
+const playerGamesDataCache = new Map();
+const competitionCache = new Map()
+const matchDataCache = new Map();
+const matchDataStatsCache = new Map();
+const registeredObservers = new Map();
 
 async function fetchData(cache, key, url, errorMsg) {
     const cachedData = cache.get(key);
@@ -44,11 +45,11 @@ async function fetchMatchStatsDetailed(matchId) {
     );
 }
 
-async function getPlayerGameStats(playerId, matchAmount = 20) {
-    return fetchData(
+async function getPlayerGameStats(playerId, game, matchAmount = 20) {
+    return await fetchData(
         playerGamesDataCache,
         playerId,
-        `${baseUrl}/players/${playerId}/games/cs2/stats?limit=${matchAmount}`,
+        `${baseUrl}/players/${playerId}/games/${game}/stats?limit=${matchAmount}`,
         "Error when requesting player game data"
     );
 }
@@ -69,6 +70,35 @@ async function getPlayerStatsByNickName(nickname) {
         `${baseUrl}/players?nickname=${encodeURIComponent(nickname)}`,
         "Error when requesting player data by nickname"
     );
+}
+
+async function getCompetitionStats(queueId) {
+    let chachedStats = competitionCache.get(queueId)
+    if (chachedStats) return chachedStats
+    const token = getApiKey();
+    const url = `https://api.faceit.com/queue/v1/queue/matchmaking/${queueId}`;
+    const options = {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+    };
+
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(`Ошибка: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        competitionCache.set(queueId, data);
+        return data;
+    } catch (error) {
+        console.error('Ошибка при отправке запроса:', error);
+        return null;
+    }
 }
 
 

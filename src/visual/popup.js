@@ -27,7 +27,7 @@ async function loadSettings() {
     }
 
     if (rangeSlider && sliderValueDisplay) {
-        const sliderValue = settings.sliderValue !== undefined ? settings.sliderValue : 5;
+        const sliderValue = settings.sliderValue !== undefined ? settings.sliderValue : 20;
         rangeSlider.value = sliderValue;
         sliderValueDisplay.textContent = sliderValue
     } else {
