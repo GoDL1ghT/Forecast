@@ -131,7 +131,7 @@ async function fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, player
         let matchId = matchInfo.stats["Match Id"];
         let detailedMatchInfo = await fetchMatchStatsDetailed(matchId);
         let matchStats = detailedMatchInfo.rounds[0];
-        let detailedPlayerStats = findPlayerInTeamById(matchStats.teams, playerId);//todo на айди поменять нужно
+        let detailedPlayerStats = findPlayerInTeamById(matchStats.teams, playerId);
         matchNodeByStats.matchStats = detailedPlayerStats["player_stats"];
         matchNodeByStats.rounds = parseInt(matchStats.round_stats["Rounds"], 10);
         matchNodeByStats.score = matchStats.round_stats["Score"];
