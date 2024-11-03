@@ -1,13 +1,9 @@
-let previousUrl = null;
-let resourcesIsLoaded = false
+let moduleStateByTabId = new Map()
+let previousUrlsByTabId = new Map()
 
-let registeredBGListeners = []
-
-function registerListener(key, callback) {
-    if (registeredBGListeners.includes(key)) return
-    registeredBGListeners.push(key)
-    callback()
-}
+const stateUnloaded = "unloaded"
+const stateLoaded = "loaded"
+const stateLoading = "loading"
 
 const modules = [
     {regex: /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/, module: "matchhistory"},
@@ -16,52 +12,80 @@ const modules = [
     {regex: /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats(\/.*)?$/, module: "ranking"}
 ]
 
-registerListener("tab-listener", () => {
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-        console.log(`${changeInfo.status}: ${previousUrl} -> ${tab.url}`)
-        if (changeInfo.status === 'complete' && tab.url) {
-            const currentUrl = tab.url;
-            sendMessage(tabId, {action: "load", module: "resources"});
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete' && tab.url) {
+        const currentUrl = tab.url;
+        const previousUrl = previousUrlsByTabId.get(tabId) || "";
 
-            waitForResourcesToLoad().then(() => {
-                modules.forEach(({regex, module}) => {
-                    produceModuleAction(regex, currentUrl, module, tabId)
-                })
-                previousUrl = currentUrl;
-            });
+        console.log(`Tab updated: ${previousUrl} -> ${currentUrl}, ${tabId}`);
+
+        await loadResourcesIfNeeded(tabId);
+        await handleModules(currentUrl, previousUrl, tabId);
+
+        previousUrlsByTabId.set(tabId, currentUrl);
+    }
+
+    if (changeInfo.status === 'loading' && tabId) {
+        moduleStateByTabId.delete(`${tabId}-resources`)
+    }
+});
+
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+    previousUrlsByTabId.delete(tabId)
+    moduleStateByTabId.delete(`${tabId}-resources`)
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    let moduleStateId = request.module
+    let moduleState = request.state
+    if (moduleState === stateUnloaded) {
+        moduleStateByTabId.delete(moduleStateId)
+    } else {
+        moduleStateByTabId.set(moduleStateId, moduleState)
+    }
+});
+
+async function handleModules(currentUrl, previousUrl, tabId) {
+    for (const { regex, module } of modules) {
+        let moduleStateId = `${tabId}-${module}`
+        let moduleState = moduleStateByTabId.get(moduleStateId)
+        if (moduleState === stateLoading) continue
+        const action = determineAction(regex, currentUrl, previousUrl);
+        if (action) {
+            moduleStateByTabId.set(moduleStateId, stateLoading)
+            await sendMessage(tabId, { action: action, module: module, tabId: tabId });
         }
-    })
-})
-
-registerListener("resource-listener", () => {
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.message === "resourcesLoaded") {
-            resourcesIsLoaded = true
-        }
-    });
-})
-
-function produceModuleAction(regex, url, module, tabId) {
-    const match = url.match(regex);
-    let action = match ? (previousUrl && previousUrl !== url ? "reload" : "load") : "unload";
-    sendMessage(tabId, {action: action, module: module});
+    }
 }
 
-function sendMessage(tabId, object) {
-    chrome.tabs.sendMessage(tabId, object)
+function determineAction(regex, currentUrl, previousUrl) {
+    const currentMatch = currentUrl.match(regex);
+    const previousMatch = previousUrl.match(regex);
+
+    if (currentMatch && previousMatch) return "reload";
+    if (currentMatch) return "load";
+    if (previousMatch) return "unload";
+    return null;
 }
 
-function waitForResourcesToLoad() {
+async function loadResourcesIfNeeded(tabId) {
+    if (!moduleStateByTabId.get(`${tabId}-resources`)) {
+        await sendMessage(tabId, { action: "load", module: "resources", tabId: tabId });
+        await waitForResourcesToLoad(tabId);
+    }
+}
+
+async function sendMessage(tabId, object) {
+    return chrome.tabs.sendMessage(tabId, object);
+}
+
+function waitForResourcesToLoad(tabId) {
     return new Promise(resolve => {
-        if (resourcesIsLoaded) {
-            resolve();
-        } else {
-            const interval = setInterval(() => {
-                if (resourcesIsLoaded) {
-                    clearInterval(interval);
-                    resolve();
-                }
-            }, 100);
-        }
+        const checkInterval = setInterval(() => {
+            if (moduleStateByTabId.get(`${tabId}-resources`)) {
+                clearInterval(checkInterval);
+                resolve();
+            }
+        }, 50);
     });
 }

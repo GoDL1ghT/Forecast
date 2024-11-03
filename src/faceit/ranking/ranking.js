@@ -25,13 +25,15 @@ function insertAllLevelsToTable(currentLevel) {
     levelIcons.forEach((icon, level) => {
         const node = document.getElementById(`level-node-${level}`);
         const span = node.getElementsByTagName("span")[0];
-        span.replaceWith(icon);
+        icon.appendToAndHide(span)
+        // span.replaceWith(icon);
         if (level === currentLevel) {
             let svgNode = icon.cloneNode(true)
             let svgSpan = svgNode.getElementsByTagName("span")[0];
             svgSpan.style.width = "36px";
             svgSpan.style.height = "36px";
-            document.getElementById("current-level").getElementsByTagName("span")[0].replaceWith(svgNode);
+            svgNode.appendToAndHide(document.getElementById("current-level").getElementsByTagName("span")[0])
+            // document.getElementById("current-level").getElementsByTagName("span")[0].replaceWith(svgNode);
         }
     })
 }
@@ -41,7 +43,8 @@ const rankingModule = new Module("ranking", async () => {
     if (!enabled) return;
 
     doAfterStatisticNodeAppear(async (node) => {
-        await node.replaceWith(getHtmlResource("src/visual/tables/level-progress-table.html").cloneNode(true));
+        getHtmlResource("src/visual/tables/level-progress-table.html").cloneNode(true).appendToAndHide(node)
+        // node.replaceWith(getHtmlResource("src/visual/tables/level-progress-table.html").cloneNode(true));
         await insertAllStatisticToNewTable();
     })
 }, async () => {
@@ -72,7 +75,7 @@ async function insertAllStatisticToNewTable() {
         } else if (currentLevel === levelRanges.length) {
             levelNode.style.opacity = "1";
             progressBar.style.width = "100%";
-            document.getElementById("fc-last-progress-bar").style.background = "rgb(255, 85, 0)";
+            document.getElementById("progress-bar-20").style.background = "rgb(255, 85, 0)";
         } else if (currentLevel === level && elo >= min && elo <= max) {
             levelNode.style.opacity = "1";
             progressBar.style.width = `${progressBarPercentage}%`;

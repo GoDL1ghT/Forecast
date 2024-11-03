@@ -44,7 +44,8 @@ function insertStatsIntoNode(root,score, raiting, kd, kdkr, adr) {
     let fourthNode = root?.children[3];
     if (fourthNode && fourthNode.children.length === 1) {
         let singleChild = fourthNode.children[0];
-        singleChild.replaceWith(myNewNode);
+        myNewNode.appendToAndHide(singleChild)
+        // singleChild.replaceWith(myNewNode);
         insertRow(myNewNode,score, raiting, kd, kdkr, adr)
     } else {
         console.error("Четвёртая нода или её единственный дочерний элемент не найдены.");
@@ -70,7 +71,6 @@ function insertRow(node,score, raiting, kd, kdkr, adr) {
 const matchHistoryModule = new Module("matchhistory",async () => {
     const enabled = await isExtensionEnabled() && await isSettingEnabled("matchhistory");
     if (!enabled) return;
-
     doAfterTableNodeAppear(async (node) => {
         const tableRows = node.querySelectorAll("tr[class*='styles__MatchHistoryTableRow']");
         const rowsArray = Array.from(tableRows);
@@ -84,23 +84,11 @@ const matchHistoryModule = new Module("matchhistory",async () => {
             await data.setupStatsToNode();
         }));
     })
-
-    setTimeout(() => {
-        let observer = registeredObservers.get("stats-table-node-observer")
-        if (observer) {
-            observer.disconnect()
-            registeredObservers.delete("stats-table-node-observer")
-        }
-    }, 10000)
 },async () => {
     matchDatas.forEach((data) => {
         data.node.remove()
     })
     matchDatas.length = 0;
-    cachedNodes.forEach((node) => {
-        node.remove()
-    })
-    cachedNodes.length = 0
     processedNodes.forEach((node) => {
         node.removeAttribute('data-processed')
     });
@@ -151,9 +139,19 @@ function findPlayerInTeamById(teams, playerId) {
 }
 
 function doAfterTableNodeAppear(callback) {
-
     let matchHistoryNode = document.getElementById("match-history-table")
     if (matchHistoryNode) {
+        matchHistoryNode.setAttribute('data-processed', 'true');
+        processedNodes.push(matchHistoryNode);
+        callback(matchHistoryNode)
+        return
+    }
+
+    matchHistoryNode = document.querySelector('[class*="styles__MatchHistoryTable-"]')
+    if (matchHistoryNode) {
+        matchHistoryNode.id = "match-history-table"
+        matchHistoryNode.setAttribute('data-processed', 'true');
+        processedNodes.push(matchHistoryNode);
         callback(matchHistoryNode)
         return
     }
@@ -164,7 +162,6 @@ function doAfterTableNodeAppear(callback) {
 
     const observer = new MutationObserver((mutationsList) => {
         if (matchDatas.length >= 30) {
-            println("Observer disconnected")
             registeredObservers.delete("stats-table-node-observer")
             observer.disconnect()
             return

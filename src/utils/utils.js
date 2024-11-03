@@ -1,12 +1,25 @@
 const prefix = "[FORECAST]"
 
 function println(...args) {
-    console.log('%c[%cFORE%cCAST%c]:', 'color: white; background-color: black;', 'color: orange; font-weight: bold; background-color: black;', 'color: white; font-weight: bold; background-color: black;', 'color: white; background-color: black;',args.join(" "));
+    console.log('%c[%cFORE%cCAST%c]:', 'color: white; background-color: black;', 'color: orange; font-weight: bold; background-color: black;', 'color: white; font-weight: bold; background-color: black;', 'color: white; background-color: black;', args.join(" "));
 }
 
 function error(...args) {
     console.error(prefix + " " + args.join(" "));
 }
+
+function hideNode(node) {
+    node.style.display = 'none';
+}
+
+Element.prototype.appendTo = function(node) {
+    node.insertAdjacentElement('afterend',this);
+};
+
+Element.prototype.appendToAndHide = function(node) {
+    this.appendTo(node);
+    hideNode(node);
+};
 
 async function getSliderValue() {
     return new Promise((resolve, reject) => {

@@ -5,22 +5,24 @@ const newLevelsModule = new Module("levels", async () => {
     doAfterSelfNickNodeAppear(async (nick) => {
         doAfterStatisticBarNodeAppear(nick, async (node) => {
             let newTable = getHtmlResource("src/visual/tables/elo-progress-bar.html").cloneNode(true)
-            node.replaceWith(newTable);
+            newTable.appendToAndHide(node)
+            // node.replaceWith(newTable);
             await insertStatsToEloBar(nick)
         })
     })
 
 
     doAfterWidgetEloNodeAppear(async (node) => {
-        node.parentNode.id = "edited-widget"
-        node.remove()
+        let nodeToRemove = node.parentNode.parentNode
+        nodeToRemove.parentNode.id = "edited-widget"
+        hideNode(nodeToRemove)
     })
 
     const defineUrlType = (url) => {
         switch (true) {
             case /^https:\/\/www\.faceit\.com\/\w+\/matchmaking$/.test(url):
                 return "lobby";
-            case /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/[^\/]+$/.test(url):
+            case /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)(\/.*)?$/.test(url):
                 return "profile";
             case /^https:\/\/www\.faceit\.com\/\w+\/cs2\/room\/[\w\-]+(\/.*)?$/.test(url):
                 return "matchroom";
@@ -38,10 +40,18 @@ const newLevelsModule = new Module("levels", async () => {
         let newIcon = levelIcons.get(currentLevel).cloneNode(true)
         if (lobbyType === "profile") {
             doAfterMainLevelAppear(async (node) => {
-                let oldIcon = node.getElementsByTagName("svg")[0]
-                let icon = newIcon.cloneNode(true)
+                if (document.getElementById("new-elo-level-icon")) return
+                println("mainLevelNodeAppeared")
+                let isTopIcon = node.getElementsByTagName("i").length > 0
+                let icon = newIcon.cloneNode(true).childNodes[0]
                 icon.id = "new-elo-level-icon"
-                oldIcon.replaceWith(icon)
+                if (isTopIcon) {
+                    node.appendChild(icon)
+                } else {
+                    let oldIcon = node.getElementsByTagName("svg")[0]
+                    icon.appendToAndHide(oldIcon)
+                    // oldIcon.replaceWith(icon)
+                }
             })
         } else if (lobbyType === "lobby") handlePartyLobby(nickNode, nick, newIcon)
         else handleMatchRoomLobby(nickNode, nick, newIcon)
@@ -58,7 +68,8 @@ function handleMatchRoomLobby(nickNode, nick, newIcon) {
         let section = playerCardNodes[playerCardNodes.length - 1].firstChild.childNodes
         doAfter(() => section.length === 3, () => {
             let oldIcon = section[playerCardNodes.length - 1];
-            oldIcon.replaceWith(newIcon)
+            newIcon.appendToAndHide(oldIcon)
+            // oldIcon.replaceWith(newIcon)
         })
     })
 }
@@ -83,7 +94,8 @@ function handleFullVariant(node, mainNode, newIcon) {
     doAfter(
         () => levelNode.length === 2,
         () => {
-            levelNode[0].replaceWith(newIcon.firstChild)
+            newIcon.firstChild.appendToAndHide(levelNode[0])
+            // levelNode[0].replaceWith(newIcon.firstChild)
         }
     )
 }
@@ -94,7 +106,8 @@ function handleShortVariant(node, nick, newIcon) {
         async () => {
             const siblings = Array.from(node.children)
             const eloIcon = siblings[3];
-            eloIcon.replaceWith(newIcon.firstChild)
+            newIcon.firstChild.appendToAndHide(eloIcon)
+            // eloIcon.replaceWith(newIcon.firstChild)
         })
 }
 
@@ -207,7 +220,7 @@ function doAfterSelfNickNodeAppear(callback) {
 
 function doAfterMainLevelAppear(callback) {
     const observer = new MutationObserver(mutationsList => {
-        let found = !!document.getElementById("new-elo-level-icon");
+        let found = false;
 
         function checkNodeAndChildren(node) {
             if (found) return;
@@ -228,8 +241,6 @@ function doAfterMainLevelAppear(callback) {
                     childList: true,
                     subtree: true
                 });
-
-                return;
             }
             node.childNodes.forEach(checkNodeAndChildren);
         }
@@ -237,11 +248,11 @@ function doAfterMainLevelAppear(callback) {
         for (const mutation of mutationsList) {
             if (mutation.type === 'childList') {
                 for (const node of mutation.addedNodes) {
-                    if (found) break;
                     checkNodeAndChildren(node);
+                    if (found) return;
                 }
             }
-            if (found) break;
+            if (found) return;
         }
     });
 
@@ -255,7 +266,6 @@ function doAfterMainLevelAppear(callback) {
 }
 
 function doAfterWidgetEloNodeAppear(callback) {
-    let nodeCounter = 0
     const observer = new MutationObserver(mutationsList => {
         let found = !!document.getElementById("edited-widget");
 
@@ -263,10 +273,7 @@ function doAfterWidgetEloNodeAppear(callback) {
             if (found) return;
 
             if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.matches('[class*="WidgetTitleWrapper__NewEloWidgetContainer-"]')) {
-                    nodeCounter++
-                    if (nodeCounter < 2) return;
-                    nodeCounter = 0
+                if (node.matches('[class*="EloWidget__Holder-"]')) {
                     callback(node)
                     found = true;
                     return;
@@ -306,7 +313,7 @@ function doAfterNickNameCardNodeAppear(callback) {
         function checkNodeAndChildren(node) {
             if (node.nodeType === Node.ELEMENT_NODE) {
                 if (node.matches('[class*="UserStats__StatsContainer-"]')) {
-                    if (lobbyType === "profile") node.id = "player-profilecard-nick-node"
+                    node.id = "player-profilecard-nick-node"
                     callback(node)
                     return;
                 }
@@ -333,16 +340,17 @@ function doAfterNickNameCardNodeAppear(callback) {
 }
 
 function doAfterNickNameNodeAppear(lobbyType, callback) {
+    if (lobbyType === "profile") {
+        let node = document.getElementById("player-profile-nick-node")
+        if (node) {
+            callback(node)
+            return
+        }
+    }
+
     const observer = new MutationObserver(mutationsList => {
         let counterMax = lobbyType === "matchroom" ? 10 : lobbyType === "lobby" ? 5 : 1
         let counter = 0
-        if (lobbyType === "profile") {
-            let node = document.getElementById("player-profile-nick-node")
-            if (node) {
-                callback(node)
-                return
-            }
-        }
 
         function checkNodeAndChildren(node) {
             if (counter === counterMax) return;

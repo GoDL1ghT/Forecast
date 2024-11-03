@@ -9,7 +9,6 @@ const resourcesModule = new Module("resources", async () => {
     await loadAllHTMLs();
     await loadLevelIcons();
     isResourcesLoaded = true
-    chrome.runtime.sendMessage({ message: "resourcesLoaded" });
 }, async () => {
 
 })
@@ -59,8 +58,6 @@ async function getHTMLCodeFromFile(filePath) {
 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlContent;
-
-    cachedNodes.push(tempDiv);
     return tempDiv
 }
 

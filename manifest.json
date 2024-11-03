@@ -40,7 +40,7 @@
         "src/faceit/room/matchroom.js",
         "src/faceit/history/matchhistory.js",
         "src/faceit/ranking/ranking.js",
-        "src/faceit/ranking/elo-bar.js"
+        "src/faceit/ranking/levels.js"
       ]
     }
   ],

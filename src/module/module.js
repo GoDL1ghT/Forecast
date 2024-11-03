@@ -4,10 +4,10 @@ class Module {
         this.loadAction = loadAction;
         this.unloadAction = unloadAction;
         this.isLoaded = false;
-        this.url = ""
+        this.tabId = 0
     }
 
-    async load() {
+    async #load() {
         if (this.isLoaded) return
         println(`Module ${this.name} is loading`);
         await this.loadAction();
@@ -15,7 +15,7 @@ class Module {
         println(`Module ${this.name} is successfully loaded`);
     }
 
-    async reload(){
+    async #reload(){
         println(`Module ${this.name} is reloading`);
         await this.unloadAction();
         this.isLoaded = false
@@ -24,7 +24,7 @@ class Module {
         println(`Module ${this.name} is successfully reloaded`);
     }
 
-    async unload() {
+    async #unload() {
         if (!this.isLoaded) return
         println(`Module ${this.name} is disabling`);
         await this.unloadAction();
@@ -32,16 +32,23 @@ class Module {
         println(`Module ${this.name} is successfully disabled`);
     }
 
+    async report(state) {
+        await chrome.runtime.sendMessage({module: `${this.tabId}-${this.name}`, state: state})
+    }
+
     async produceOf(action) {
         switch (action) {
             case "load":
-                await this.load();
+                await this.#load();
+                await this.report("loaded");
                 break;
             case "reload":
-                await this.reload();
+                await this.#reload();
+                await this.report("loaded");
                 break;
             case "unload":
-                await this.unload();
+                await this.#unload();
+                await this.report("unloaded");
                 break;
             default:
                 println("Unknown action:", action);
@@ -54,6 +61,7 @@ function moduleListener(module) {
         if (request.module !== module.name) return;
 
         if (request.action) {
+            module.tabId = request.tabId
             await module.produceOf(request.action);
         }
     });
