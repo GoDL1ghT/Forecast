@@ -121,17 +121,17 @@ async function scanPlayerStatistic() {
     const filteredMatchDatas = matchDatas.filter((data) => {
         return !data.node.hasAttribute("data-processed")
     })
-    await fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, playerNickName);
+    await fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, playerId);
 }
 
-async function fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, playerNickName) {
+async function fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, playerId) {
 
     const promises = filteredMatchDatas.map(async (matchNodeByStats, i) => {
         let matchInfo = matchesInfo[i];
         let matchId = matchInfo.stats["Match Id"];
         let detailedMatchInfo = await fetchMatchStatsDetailed(matchId);
         let matchStats = detailedMatchInfo.rounds[0];
-        let detailedPlayerStats = findPlayerByNickname(matchStats.teams, playerNickName);//todo на айди поменять нужно
+        let detailedPlayerStats = findPlayerInTeamById(matchStats.teams, playerId);//todo на айди поменять нужно
         matchNodeByStats.matchStats = detailedPlayerStats["player_stats"];
         matchNodeByStats.rounds = parseInt(matchStats.round_stats["Rounds"], 10);
         matchNodeByStats.score = matchStats.round_stats["Score"];
@@ -140,9 +140,9 @@ async function fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, player
     await Promise.all(promises);
 }
 
-function findPlayerByNickname(teams, nickname) {
+function findPlayerInTeamById(teams, playerId) {
     for (let team of teams) {
-        let player = team.players.find(player => player.nickname === nickname);
+        let player = team.players.find(player => player.player_id === playerId);
         if (player) {
             return player;
         }
