@@ -51,7 +51,9 @@ class TeamWinRateCalculator {
     insertHtmlToPlayerCard(filePath, playerId, targetNode) {
         let htmlResource = getHtmlResource(filePath).cloneNode(true);
         targetNode.insertAdjacentElement('beforeend', htmlResource);
-        document.getElementById("player-table").id = `player-table-${playerId}`
+        let table = document.getElementById("player-table")
+        table.id = `player-table-${playerId}`
+        table.closest(`[class*="UserCardPopup__UserCardContainer"]`).style.minHeight = "530px"
         cachedNodes.push(htmlResource);
     }
 
