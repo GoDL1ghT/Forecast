@@ -6,7 +6,6 @@ const newLevelsModule = new Module("levels", async () => {
         doAfterStatisticBarNodeAppear(nick, async (node) => {
             let newTable = getHtmlResource("src/visual/tables/elo-progress-bar.html").cloneNode(true)
             newTable.appendToAndHide(node)
-            // node.replaceWith(newTable);
             await insertStatsToEloBar(nick)
         })
     })
@@ -50,7 +49,6 @@ const newLevelsModule = new Module("levels", async () => {
                 } else {
                     let oldIcon = node.getElementsByTagName("svg")[0]
                     icon.appendToAndHide(oldIcon)
-                    // oldIcon.replaceWith(icon)
                 }
             })
         } else if (lobbyType === "lobby") handlePartyLobby(nickNode, nick, newIcon)
@@ -69,7 +67,6 @@ function handleMatchRoomLobby(nickNode, nick, newIcon) {
         doAfter(() => section.length === 3, () => {
             let oldIcon = section[playerCardNodes.length - 1];
             newIcon.appendToAndHide(oldIcon)
-            // oldIcon.replaceWith(newIcon)
         })
     })
 }
@@ -95,7 +92,6 @@ function handleFullVariant(node, mainNode, newIcon) {
         () => levelNode.length === 2,
         () => {
             newIcon.firstChild.appendToAndHide(levelNode[0])
-            // levelNode[0].replaceWith(newIcon.firstChild)
         }
     )
 }
@@ -107,7 +103,6 @@ function handleShortVariant(node, nick, newIcon) {
             const siblings = Array.from(node.children)
             const eloIcon = siblings[3];
             newIcon.firstChild.appendToAndHide(eloIcon)
-            // eloIcon.replaceWith(newIcon.firstChild)
         })
 }
 
@@ -178,7 +173,7 @@ function doAfterStatisticBarNodeAppear(nick, callback) {
         subtree: true
     });
 
-    registeredObservers.set("stats-bar-node-observer", observer); // Регистрация наблюдателя
+    registeredObservers.set("stats-bar-node-observer", observer);
 }
 
 function doAfterSelfNickNodeAppear(callback) {

@@ -26,14 +26,12 @@ function insertAllLevelsToTable(currentLevel) {
         const node = document.getElementById(`level-node-${level}`);
         const span = node.getElementsByTagName("span")[0];
         icon.appendToAndHide(span)
-        // span.replaceWith(icon);
         if (level === currentLevel) {
             let svgNode = icon.cloneNode(true)
             let svgSpan = svgNode.getElementsByTagName("span")[0];
             svgSpan.style.width = "36px";
             svgSpan.style.height = "36px";
             svgNode.appendToAndHide(document.getElementById("current-level").getElementsByTagName("span")[0])
-            // document.getElementById("current-level").getElementsByTagName("span")[0].replaceWith(svgNode);
         }
     })
 }
@@ -44,7 +42,6 @@ const rankingModule = new Module("ranking", async () => {
 
     doAfterStatisticNodeAppear(async (node) => {
         getHtmlResource("src/visual/tables/level-progress-table.html").cloneNode(true).appendToAndHide(node)
-        // node.replaceWith(getHtmlResource("src/visual/tables/level-progress-table.html").cloneNode(true));
         await insertAllStatisticToNewTable();
     })
 }, async () => {
@@ -92,7 +89,7 @@ function getBarProgress(elo) {
 
     for (let i = 0; i < levelRanges.length; i++) {
         if (elo >= levelRanges[i].min && elo <= levelRanges[i].max) {
-            currentLevel = i + 1; // Уровни начинаются с 1
+            currentLevel = i + 1;
             currentRange = levelRanges[i];
             break;
         }
