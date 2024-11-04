@@ -29,18 +29,18 @@ const newLevelsModule = new Module("levels", async () => {
     };
 
     let lobbyType = defineUrlType(window.location.href)
-
     if (lobbyType !== "profile") {
         doAfterNickNameNodeAppear(lobbyType, async (nickNode) => {
-            let nick = nickNode.innerText
-            let playerStatistic = await getPlayerStatsByNickName(nick);
-            let {gameStats, gameType} = getStatistic(playerStatistic)
-            if (!gameStats) return
-            let elo = parseInt(gameStats["faceit_elo"], 10);
-            let [currentLevel, _] = getBarProgress(elo, gameType);
-            let newIcon = levelIcons.get(currentLevel).cloneNode(true)
-            if (lobbyType === "lobby") handlePartyLobby(nickNode, nick, newIcon)
-            else handleMatchRoomLobby(nickNode)
+            if (lobbyType === "lobby") {
+                let nick = nickNode.innerText
+                let playerStatistic = await getPlayerStatsByNickName(nick);
+                let {gameStats, gameType} = getStatistic(playerStatistic)
+                if (!gameStats) return
+                let elo = parseInt(gameStats["faceit_elo"], 10);
+                let [currentLevel, _] = getBarProgress(elo, gameType);
+                let newIcon = levelIcons.get(currentLevel).cloneNode(true)
+                handlePartyLobby(nickNode, nick, newIcon)
+            } else handleMatchRoomLobby(nickNode)
         })
     } else {
         doAfterMainLevelAppear(async (node) => {
@@ -111,7 +111,7 @@ function getStatistic(playerStatistic) {
     return {gameStats, gameType}
 }
 
-function handleMatchRoomLobby(nickNode) {
+function handleMatchRoomLobby(nickNode) {//todo Придумать, как получать стату игрока на момент
     let playerCardNodes = nickNode.parentNode.parentNode.parentNode.parentNode.parentNode.children
     doAfter(() => playerCardNodes.length === 3, () => {
         let section = playerCardNodes[playerCardNodes.length - 1].firstChild.childNodes
