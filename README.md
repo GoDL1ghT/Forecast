@@ -44,4 +44,4 @@ This project is a browser extension that retrieves and displays statistics for F
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License. See the [`LICENSE`](https://github.com/TerraMiner/Forecast/blob/master/LICENSE) file for details.
