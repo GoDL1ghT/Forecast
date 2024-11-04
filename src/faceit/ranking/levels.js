@@ -73,7 +73,7 @@ const newLevelsModule = new Module("levels", async () => {
         let innerNode = node.querySelector('[class*="Tag__Container-"]')
         doAfter(() => innerNode.childNodes && innerNode.childNodes.length > 1, () => {
             let eloText = innerNode.querySelector('[class*="Text-sc"]').firstChild.firstElementChild.innerText
-            let elo = parseInt(eloText.replace(/\s/g, ''), 10)
+            let elo = parseInt(eloText.replace(/[\s,._]/g, ''), 10)
             let oldIcon = innerNode.childNodes[0]
             let [currentLevel, _] = getBarProgress(elo, "cs2");
             let newIcon = levelIcons.get(currentLevel).cloneNode(true)
@@ -89,8 +89,8 @@ const newLevelsModule = new Module("levels", async () => {
                 if (currentNode.tagName === "SPAN" && i === 0) break
             }
             let nick = currentNode?.innerText;
-            doAfter(() => !!node.childNodes[2].firstElementChild.childNodes[1], async () => {
-                let oldIcon = node.childNodes[2].firstElementChild.childNodes[1]
+            doAfter(() => Array.from(node?.childNodes[2]?.firstElementChild?.childNodes).some(node => node.tagName === "svg"), async () => {
+                let oldIcon = Array.from(node.childNodes[2].firstElementChild.childNodes).find(node => node.tagName === "svg")
                 let playerStatistic = await getPlayerStatsByNickName(nick);
                 let {gameStats, gameType} = getStatistic(playerStatistic)
                 if (!gameStats) return
@@ -113,7 +113,7 @@ function getStatistic(playerStatistic) {
     return {gameStats, gameType}
 }
 
-function handleMatchRoomLobby(nickNode) {//todo Придумать, как получать стату игрока на момент
+function handleMatchRoomLobby(nickNode) {
     let playerCardNodes = nickNode.parentNode.parentNode.parentNode.parentNode.parentNode.children
     doAfter(() => playerCardNodes.length === 3, () => {
         let section = playerCardNodes[playerCardNodes.length - 1].firstChild.childNodes
@@ -122,7 +122,11 @@ function handleMatchRoomLobby(nickNode) {//todo Придумать, как по�
             let [currentLevel, _] = getBarProgress(elo, "cs2");
             let newIcon = levelIcons.get(currentLevel).cloneNode(true).childNodes[0]
             let oldIcon = section[playerCardNodes.length - 1];
-            newIcon.appendToAndHide(oldIcon)
+            if (typeof oldIcon.className === "string" && oldIcon.className.includes("BadgeHolder__Holder")) {
+                newIcon.appendTo(oldIcon)
+            } else {
+                newIcon.appendToAndHide(oldIcon)
+            }
         })
     })
 }

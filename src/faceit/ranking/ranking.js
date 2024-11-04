@@ -144,7 +144,7 @@ function doAfterStatisticNodeAppear(callback) {
         null,
         XPathResult.FIRST_ORDERED_NODE_TYPE,
         null
-    ).singleNodeValue
+    ).singleNodeValue?.parentElement
     if (element) callback(element)
 
     const observer = new MutationObserver(mutationsList => {
@@ -184,16 +184,3 @@ function doAfterStatisticNodeAppear(callback) {
 }
 
 moduleListener(rankingModule);
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url) {
-        // Проверяем, если URL изменился
-        if (tab.url.endsWith('/csgo')) {
-            console.log('URL изменился на csgo:', tab.url);
-            // Здесь добавьте код, который должен выполняться при смене на csgo
-        } else if (tab.url.endsWith('/cs2')) {
-            console.log('URL изменился на cs2:', tab.url);
-            // Здесь добавьте код, который должен выполняться при смене на cs2
-        }
-    }
-});
