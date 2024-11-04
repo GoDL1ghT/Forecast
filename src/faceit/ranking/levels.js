@@ -196,6 +196,48 @@ async function insertStatsToEloBar(nick) {
     }
 }
 
+function doAfterFriendNodeAppear(callback) {
+    // [class*=FriendLine__Holder]
+    let existFriendNodes = document.querySelectorAll('[class*="FriendLine__Holder"]')
+    if (existFriendNodes && existFriendNodes.length > 0) {
+        existFriendNodes.forEach(node => newLevelsModule.processedNode(node))
+        callback(existFriendNodes)
+    }
+
+    const observer = new MutationObserver(mutationsList => {
+
+        function checkNodeAndChildren(node) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.hasAttribute('data-processed')) return;
+                const hasContainer = node.matches('[class*="FriendLine__Holder"]');
+
+                if (hasContainer) {
+                    newLevelsModule.processedNode(node);
+                    callback(node);
+                    return;
+                }
+                node.childNodes.forEach(checkNodeAndChildren);
+            }
+        }
+
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                for (const node of mutation.addedNodes) {
+                    checkNodeAndChildren(node);
+                }
+            }
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        attributes: true,
+        subtree: true
+    });
+
+    newLevelsModule.registerObserver("find-result-bar-node-observer", observer);
+}
+
 function doAfterSearchPlayerNodeAppear(callback) {
     const targetHrefPattern = new RegExp(`^/${extractLanguage()}/players\/([a-zA-Z0-9-_]+)$`);
 
