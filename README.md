@@ -30,13 +30,19 @@ This project is a browser extension that retrieves and displays statistics for F
 
 ## Screenshots
 
-![image](https://github.com/user-attachments/assets/9cc47323-4322-4695-ac1b-84d10d6f4131)
+![image](https://github.com/user-attachments/assets/8b50b0a0-7cf3-4dd9-86fa-4603f102e331)
 
-![image](https://github.com/user-attachments/assets/9a43d9b0-72be-4841-9c74-e1133b3f7cc7)
+![image](https://github.com/user-attachments/assets/af8d01c2-cadb-416a-8315-20d9ac7edc96)
 
-![image](https://github.com/user-attachments/assets/f2de9048-b296-4729-b463-fda6ef36ea40)
+![image](https://github.com/user-attachments/assets/04b92189-99ce-4244-b210-3cde13db2c27) ![image](https://github.com/user-attachments/assets/afcde6c0-bf5f-4c18-b6a2-345f571d2b98)
 
-![image](https://github.com/user-attachments/assets/9ce1bcbd-2ccf-4657-8f6e-6c0420aae782)
+![image](https://github.com/user-attachments/assets/b0f6bc36-9e2f-46f4-a8dc-f50a9c98c2fd)
+
+![image](https://github.com/user-attachments/assets/05492a4e-ccf8-4df4-8a9d-57c5211d44b0)
+
+![image](https://github.com/user-attachments/assets/396e5e19-c9a2-4f72-b5b1-255a1812329c)
+
+![image](https://github.com/user-attachments/assets/fd93fe4b-97a3-46d0-8df5-8fedea0a3386) ![image](https://github.com/user-attachments/assets/0db7ad7e-0a8c-4fd1-b870-edbb106c541d)
 
 ## License
 
