@@ -29,6 +29,7 @@ const newLevelsModule = new Module("levels", async () => {
     };
 
     let lobbyType = defineUrlType(window.location.href)
+    //todo Сделать для https://www.faceit.com/ru/cs2/rankings?regionId=EU лвла
     if (lobbyType !== "profile") {
         doAfterNickNameNodeAppear(lobbyType, async (nickNode) => {
             if (lobbyType === "lobby") {
@@ -60,6 +61,7 @@ const newLevelsModule = new Module("levels", async () => {
                 node.appendChild(icon)
             } else {
                 doAfter(() => !!node.getElementsByTagName("svg")[0], () => {
+                    if (document.getElementById("new-elo-level-icon")) return
                     let oldIcon = node.getElementsByTagName("svg")[0]
                     icon.appendToAndHide(oldIcon)
                 })
