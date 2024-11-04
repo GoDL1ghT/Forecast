@@ -14,30 +14,34 @@ This project is a browser extension that retrieves and displays statistics for F
 
 ### Method 1: Manual Installation
 
-1. Download the source code
-2. Go to `chrome://extensions/` and click Download the extracted extension
+1. Download the source code.
+2. Go to [`chrome://extensions/`](chrome://extensions/) (If necessary, enable developer mode) and click "Load unpacked" to upload the folder.
 3. Open Faceit websibe and navigate to the matchroom page.
-4. The application will automatically fetch and display match statistics.
 
 ### Method 2: Batch Script Installation
 
 1. [Download the `.bat` file](https://github.com/GoDL1ghT/Forecast/blob/master/update.bat).
 2. Create a new folder on your computer and place the `.bat` file in this folder.
 3. Run the `.bat` file by double-clicking on it; it will automatically set up the required files in the folder.
-4. Go to `chrome://extensions/` and click "Load unpacked" to upload the folder containing the setup from the `.bat` file.
+4. Go to [`chrome://extensions/`](chrome://extensions/) (If necessary, enable developer mode) and click "Load unpacked" to upload the folder.
 5. Open the Faceit website and navigate to the matchroom page.
-6. The application will automatically fetch and display match statistics.
 
 ## Screenshots
 
-![image](https://github.com/user-attachments/assets/9cc47323-4322-4695-ac1b-84d10d6f4131)
+![image](https://github.com/user-attachments/assets/8b50b0a0-7cf3-4dd9-86fa-4603f102e331)
 
-![image](https://github.com/user-attachments/assets/9a43d9b0-72be-4841-9c74-e1133b3f7cc7)
+![image](https://github.com/user-attachments/assets/af8d01c2-cadb-416a-8315-20d9ac7edc96)
 
-![image](https://github.com/user-attachments/assets/f2de9048-b296-4729-b463-fda6ef36ea40)
+![image](https://github.com/user-attachments/assets/04b92189-99ce-4244-b210-3cde13db2c27) ![image](https://github.com/user-attachments/assets/afcde6c0-bf5f-4c18-b6a2-345f571d2b98)
 
-![image](https://github.com/user-attachments/assets/9ce1bcbd-2ccf-4657-8f6e-6c0420aae782)
+![image](https://github.com/user-attachments/assets/b0f6bc36-9e2f-46f4-a8dc-f50a9c98c2fd)
+
+![image](https://github.com/user-attachments/assets/05492a4e-ccf8-4df4-8a9d-57c5211d44b0)
+
+![image](https://github.com/user-attachments/assets/396e5e19-c9a2-4f72-b5b1-255a1812329c)
+
+![image](https://github.com/user-attachments/assets/fd93fe4b-97a3-46d0-8df5-8fedea0a3386) ![image](https://github.com/user-attachments/assets/0db7ad7e-0a8c-4fd1-b870-edbb106c541d)
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License. See the [`LICENSE`](https://github.com/TerraMiner/Forecast/blob/master/LICENSE) file for details.
