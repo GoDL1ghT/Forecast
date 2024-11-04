@@ -40,7 +40,7 @@ const newLevelsModule = new Module("levels", async () => {
             let [currentLevel, _] = getBarProgress(elo, gameType);
             let newIcon = levelIcons.get(currentLevel).cloneNode(true)
             if (lobbyType === "lobby") handlePartyLobby(nickNode, nick, newIcon)
-            else handleMatchRoomLobby(nickNode, nick)
+            else handleMatchRoomLobby(nickNode)
         })
     } else {
         doAfterMainLevelAppear(async (node) => {
@@ -111,7 +111,7 @@ function getStatistic(playerStatistic) {
     return {gameStats, gameType}
 }
 
-function handleMatchRoomLobby(nickNode, nick) {
+function handleMatchRoomLobby(nickNode) {
     let playerCardNodes = nickNode.parentNode.parentNode.parentNode.parentNode.parentNode.children
     doAfter(() => playerCardNodes.length === 3, () => {
         let section = playerCardNodes[playerCardNodes.length - 1].firstChild.childNodes
