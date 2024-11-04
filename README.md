@@ -14,19 +14,17 @@ This project is a browser extension that retrieves and displays statistics for F
 
 ### Method 1: Manual Installation
 
-1. Download the source code
-2. Go to `chrome://extensions/` and click Download the extracted extension
+1. Download the source code.
+2. Go to [`chrome://extensions/`](chrome://extensions/) (If necessary, enable developer mode) and click "Load unpacked" to upload the folder.
 3. Open Faceit websibe and navigate to the matchroom page.
-4. The application will automatically fetch and display match statistics.
 
 ### Method 2: Batch Script Installation
 
 1. [Download the `.bat` file](https://github.com/GoDL1ghT/Forecast/blob/master/update.bat).
 2. Create a new folder on your computer and place the `.bat` file in this folder.
 3. Run the `.bat` file by double-clicking on it; it will automatically set up the required files in the folder.
-4. Go to `chrome://extensions/` and click "Load unpacked" to upload the folder containing the setup from the `.bat` file.
+4. Go to [`chrome://extensions/`](chrome://extensions/) (If necessary, enable developer mode) and click "Load unpacked" to upload the folder.
 5. Open the Faceit website and navigate to the matchroom page.
-6. The application will automatically fetch and display match statistics.
 
 ## Screenshots
 
