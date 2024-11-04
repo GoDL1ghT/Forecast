@@ -18,7 +18,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         const previousUrl = previousUrlsByTabId.get(tabId) || "";
 
         console.log(`Tab updated: ${previousUrl} -> ${currentUrl}, ${tabId}`);
-
+        if (reloadPageIfStatsPage(currentUrl,tab,tabId)) return;
         await loadResourcesIfNeeded(tabId);
         await handleModules(currentUrl, previousUrl, tabId);
 
@@ -30,12 +30,12 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     }
 });
 
-chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+chrome.tabs.onRemoved.addListener((tabId) => {
     previousUrlsByTabId.delete(tabId)
     moduleStateByTabId.delete(`${tabId}-resources`)
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request) => {
     let moduleStateId = request.module
     let moduleState = request.state
     if (moduleState === stateUnloaded) {
@@ -44,6 +44,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         moduleStateByTabId.set(moduleStateId, moduleState)
     }
 });
+
+function reloadPageIfStatsPage(currentUrl, tab, tabId) {
+    const lastPart = currentUrl.split('/').pop();
+    const prevUrl = previousUrlsByTabId.get(tabId)
+    if (!prevUrl) return false
+    if (lastPart === 'csgo' && prevUrl.endsWith('cs2') ||
+        lastPart === 'cs2' && prevUrl.endsWith('csgo')) {
+        chrome.tabs.reload(tabId);
+        previousUrlsByTabId.set(tabId, currentUrl);
+        return true
+    }
+    return false
+}
 
 async function handleModules(currentUrl, previousUrl, tabId) {
     for (const { regex, module } of modules) {

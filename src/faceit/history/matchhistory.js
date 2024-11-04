@@ -16,11 +16,11 @@ class MatchNodeByMatchStats {
         let assists = parseInt(stats["Assists"], 10);
         let deaths = parseInt(stats["Deaths"], 10);
         let rounds = this.rounds;
-        let adr = parseInt(stats["ADR"],10);
+        let adr = parseInt(stats["ADR"], 10);
         let kdratio = parseFloat(stats["K/D Ratio"]);
         let krratio = parseFloat(stats["K/R Ratio"]);
-        let entryCount = parseInt(stats["Entry Count" ],10)
-        let firstKills = parseInt(stats["First Kills"],10)
+        let entryCount = parseInt(stats["Entry Count"], 10)
+        let firstKills = parseInt(stats["First Kills"], 10)
         let entryImpact = entryCount < firstKills ? entryCount : firstKills
 
         let kast = ((kills + assists + entryImpact) / rounds) * 100;
@@ -35,23 +35,23 @@ class MatchNodeByMatchStats {
             0.1587
         ).toFixed(2);
 
-        insertStatsIntoNode(this.node, this.score.replace(/\s+/g, ''), rating,`${kills}/${deaths}`, `${kdratio}/${krratio}`, adr)
+        insertStatsIntoNode(this.node, this.score.replace(/\s+/g, ''), rating, `${kills}/${deaths}`, `${kdratio}/${krratio}`, adr)
     }
 }
 
-function insertStatsIntoNode(root,score, raiting, kd, kdkr, adr) {
+function insertStatsIntoNode(root, score, raiting, kd, kdkr, adr) {
     let myNewNode = getHtmlResource("src/visual/tables/matchscore.html").cloneNode(true)
     let fourthNode = root?.children[3];
     if (fourthNode && fourthNode.children.length === 1) {
         let singleChild = fourthNode.children[0];
         myNewNode.appendToAndHide(singleChild)
-        insertRow(myNewNode,score, raiting, kd, kdkr, adr)
+        insertRow(myNewNode, score, raiting, kd, kdkr, adr)
     } else {
         console.error("Четвёртая нода или её единственный дочерний элемент не найдены.");
     }
 }
 
-function insertRow(node,score, raiting, kd, kdkr, adr) {
+function insertRow(node, score, raiting, kd, kdkr, adr) {
     const table = node.getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
     const scoreCell = newRow.insertCell(0);
@@ -67,13 +67,13 @@ function insertRow(node,score, raiting, kd, kdkr, adr) {
     adrCell.innerHTML = adr;
 }
 
-const matchHistoryModule = new Module("matchhistory",async () => {
+const matchHistoryModule = new Module("matchhistory", async () => {
     const enabled = await isExtensionEnabled() && await isSettingEnabled("matchhistory");
     if (!enabled) return;
     doAfterTableNodeAppear(async (node) => {
         const tableRows = node.querySelectorAll("tr[class*='styles__MatchHistoryTableRow']");
         const rowsArray = Array.from(tableRows);
-        rowsArray.slice(1,31).forEach((node) => {
+        rowsArray.slice(1, 31).forEach((node) => {
             if (!node.hasAttribute("data-processed")) {
                 matchDatas.push(new MatchNodeByMatchStats(node));
             }
@@ -83,20 +83,11 @@ const matchHistoryModule = new Module("matchhistory",async () => {
             await data.setupStatsToNode();
         }));
     })
-},async () => {
+}, async () => {
     matchDatas.forEach((data) => {
         data.node.remove()
     })
     matchDatas.length = 0;
-    processedNodes.forEach((node) => {
-        node.removeAttribute('data-processed')
-    });
-    processedNodes.length = 0;
-    let observer = registeredObservers.get("stats-table-node-observer")
-    if (observer) {
-        observer.disconnect()
-        registeredObservers.delete("stats-table-node-observer")
-    }
 })
 
 async function scanPlayerStatistic() {
@@ -112,16 +103,17 @@ async function scanPlayerStatistic() {
 }
 
 async function fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, playerId) {
-
     const promises = filteredMatchDatas.map(async (matchNodeByStats, i) => {
         let matchInfo = matchesInfo[i];
-        let matchId = matchInfo.stats["Match Id"];
-        let detailedMatchInfo = await fetchMatchStatsDetailed(matchId);
-        let matchStats = detailedMatchInfo.rounds[0];
-        let detailedPlayerStats = findPlayerInTeamById(matchStats.teams, playerId);
-        matchNodeByStats.matchStats = detailedPlayerStats["player_stats"];
-        matchNodeByStats.rounds = parseInt(matchStats.round_stats["Rounds"], 10);
-        matchNodeByStats.score = matchStats.round_stats["Score"];
+        if (matchInfo) {
+            let matchId = matchInfo.stats["Match Id"];
+            let detailedMatchInfo = await fetchMatchStatsDetailed(matchId);
+            let matchStats = detailedMatchInfo.rounds[0];
+            let detailedPlayerStats = findPlayerInTeamById(matchStats.teams, playerId);
+            matchNodeByStats.matchStats = detailedPlayerStats["player_stats"];
+            matchNodeByStats.rounds = parseInt(matchStats.round_stats["Rounds"], 10);
+            matchNodeByStats.score = matchStats.round_stats["Score"];
+        }
     });
 
     await Promise.all(promises);
@@ -140,19 +132,16 @@ function findPlayerInTeamById(teams, playerId) {
 function doAfterTableNodeAppear(callback) {
     let matchHistoryNode = document.getElementById("match-history-table")
     if (matchHistoryNode) {
-        matchHistoryNode.setAttribute('data-processed', 'true');
-        processedNodes.push(matchHistoryNode);
+        matchHistoryModule.processedNode(matchHistoryNode);
         callback(matchHistoryNode)
-        return
     }
 
     matchHistoryNode = document.querySelector('[class*="styles__MatchHistoryTable-"]')
     if (matchHistoryNode) {
         matchHistoryNode.id = "match-history-table"
-        matchHistoryNode.setAttribute('data-processed', 'true');
-        processedNodes.push(matchHistoryNode);
+        matchHistoryModule.processedNode(matchHistoryNode);
+        matchHistoryModule.removalNode(matchHistoryNode);
         callback(matchHistoryNode)
-        return
     }
 
     function isUniqueNode(node) {
@@ -161,11 +150,11 @@ function doAfterTableNodeAppear(callback) {
 
     const observer = new MutationObserver((mutationsList) => {
         if (matchDatas.length >= 30) {
-            registeredObservers.delete("stats-table-node-observer")
+            matchHistoryModule.registeredObservers.delete("stats-table-node-observer")
             observer.disconnect()
             return
         }
-        let found = false
+        let found = !!document.getElementById("match-history-table")
         for (const mutation of mutationsList) {
             if (mutation.type === 'childList') {
                 for (const node of mutation.addedNodes) {
@@ -175,8 +164,8 @@ function doAfterTableNodeAppear(callback) {
                             const targetNode = node.matches('[class*="styles__MatchHistoryTable-"]') ? node : node.querySelector('[class*="styles__MatchHistoryTable-"]');
                             if (isUniqueNode(targetNode)) {
                                 targetNode.id = "match-history-table"
-                                targetNode.setAttribute('data-processed', 'true');
-                                processedNodes.push(targetNode);
+                                matchHistoryModule.processedNode(targetNode);
+                                matchHistoryModule.removalNode(targetNode);
                                 callback(targetNode);
                                 found = true
                                 break;
@@ -195,7 +184,7 @@ function doAfterTableNodeAppear(callback) {
         subtree: true,
     });
 
-    registeredObservers.set("stats-table-node-observer", observer);
+    matchHistoryModule.registerObserver("stats-table-node-observer", observer);
 }
 
 moduleListener(matchHistoryModule);

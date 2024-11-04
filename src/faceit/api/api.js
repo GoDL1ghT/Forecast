@@ -5,7 +5,6 @@ const playerGamesDataCache = new Map();
 const competitionCache = new Map()
 const matchDataCache = new Map();
 const matchDataStatsCache = new Map();
-const registeredObservers = new Map();
 
 async function fetchData(cache, key, url, errorMsg) {
     const cachedData = cache.get(key);

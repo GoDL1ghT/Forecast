@@ -1,37 +1,17 @@
-let cachedNodes = [];
-let processedNodes = [];
-let currentMatchId
-
-const matchRoomModule = new Module("matchroom",async () => {
+const matchRoomModule = new Module("matchroom", async () => {
     const enabled = await isExtensionEnabled() && await isSettingEnabled("matchroom");
     if (!enabled) return;
 
     const matchId = extractMatchId();
-    if (currentMatchId === matchId) return
 
     const calculator = new TeamWinRateCalculator();
 
     try {
         if (!matchId) return;
         await calculator.getMatchWinRates(matchId);
-        currentMatchId = matchId
     } catch (err) {
         error("Error when retrieving match statistics: " + err.message);
     }
-},async () => {
-    cachedNodes.forEach((node) => {
-        node.remove();
-    });
-    cachedNodes.length = 0;
-    processedNodes.forEach((node) => {
-        node.removeAttribute('data-processed')
-    });
-    processedNodes.length = 0;
-    registeredObservers.forEach((observer) => {
-        observer.disconnect();
-    })
-    registeredObservers.clear();
-    currentMatchId = null;
 })
 
 moduleListener(matchRoomModule);
@@ -45,7 +25,7 @@ class TeamWinRateCalculator {
         let htmlResource = getHtmlResource(url).cloneNode(true)
         const firstChildWithClass = targetElement.querySelector('[class]');
         firstChildWithClass.insertAdjacentElement('afterend', htmlResource);
-        cachedNodes.push(htmlResource);
+        matchRoomModule.removalNode(htmlResource);
     }
 
     insertHtmlToPlayerCard(filePath, playerId, targetNode) {
@@ -54,19 +34,16 @@ class TeamWinRateCalculator {
         let table = document.getElementById("player-table")
         table.id = `player-table-${playerId}`
         table.closest(`[class*="UserCardPopup__UserCardContainer"]`).style.minHeight = "530px"
-        cachedNodes.push(htmlResource);
+        matchRoomModule.removalNode(htmlResource);
     }
 
     async printResults(targetNode) {
         this.insertHtmlToTeamCard('src/visual/tables/team.html', targetNode);
-        const printPromises = [];
 
         this.results.forEach((teamMap, teamName) => {
             const teamMatches = this.aggregateTeamMatches(teamMap);
-            printPromises.push(this.printTeamMatches(teamName, teamMatches));
+            this.printTeamMatches(teamName, teamMatches);
         });
-
-        await Promise.all(printPromises);
     }
 
     aggregateTeamMatches(teamMap) {
@@ -130,7 +107,7 @@ class TeamWinRateCalculator {
     }
 
     async findUserCard(playerId, callback) {
-        if (registeredObservers.has(playerId)) return;
+        if (matchRoomModule.isObserverRegistered(playerId)) return;
 
         const player = await getPlayerStatsById(playerId);
         const currentCountry = extractLanguage();
@@ -153,8 +130,7 @@ class TeamWinRateCalculator {
                             if (node.matches('[class*="UserCard__Container"]') || node.querySelector('[class*="UserCard__Container"]')) {
                                 const targetNode = node.matches('[class*="UserCard__Container"]') ? node : node.querySelector('[class*="UserCard__Container"]');
                                 if (isUniqueNode(targetNode)) {
-                                    targetNode.setAttribute('data-processed', 'true');
-                                    processedNodes.push(targetNode);
+                                    matchRoomModule.processedNode(targetNode);
                                     callback(targetNode);
                                     found = true
                                     break;
@@ -173,7 +149,7 @@ class TeamWinRateCalculator {
             subtree: true,
         });
 
-        registeredObservers.set(playerId, observer);
+        matchRoomModule.registerObserver(playerId, observer);
     }
 
 
@@ -241,17 +217,31 @@ class TeamWinRateCalculator {
         await Promise.all([...team1Promises, ...team2Promises]);
 
         const element = document.querySelector(`[name="info"][class*="Overview__Column"]`);
-        if (element) {
-            await handleInfoNode(this, element);
-        } else {
-            if (registeredObservers.has("info-table")) return
-            const observer = new MutationObserver((mutationsList) => {
-                observerCallback(this, mutationsList);
-            });
-            observer.observe(document.body, {attributes: true, childList: true, subtree: true});
-            registeredObservers.set("info-table", observer);
-            println("Registering observer for INFO-TABLE");
-        }
+        if (element) await handleInfoNode(this, element);
+
+        if (matchRoomModule.isObserverRegistered("info-table")) return
+        const observer = new MutationObserver(async (mutationsList) => {
+            let found = !!document.getElementById("team-table")
+            for (const mutation of mutationsList) {
+                if (mutation.type === 'childList') {
+                    for (const addedNode of mutation.addedNodes) {
+                        if (addedNode.nodeType !== Node.ELEMENT_NODE) continue;
+                        if (!await handleInfoNode(this, addedNode)) continue;
+                        found = true;
+                        break;
+                    }
+                }
+                if (mutation.type === 'attributes') {
+                    if (found) break
+                    const targetNode = mutation.target;
+                    if (!await handleInfoNode(this, targetNode)) continue;
+                    break;
+                }
+                if (found) break
+            }
+        });
+        observer.observe(document.body, {attributes: true, childList: true, subtree: true});
+        matchRoomModule.registerObserver("info-table", observer);
     }
 }
 
@@ -260,31 +250,9 @@ async function handleInfoNode(calculator, node) {
     const targetNode = node.matches('[name="info"]') ? node : node.querySelector('[name="info"][class*="Overview__Column"]');
     if (targetNode.hasAttribute('data-processed')) return false;
 
-    targetNode.setAttribute('data-processed', 'true');
-    processedNodes.push(targetNode);
+    matchRoomModule.processedNode(targetNode);
     await calculator.printResults(targetNode);
     return true
-}
-
-async function observerCallback(calculator, mutationsList) {
-    let found = false
-    for (const mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-            for (const addedNode of mutation.addedNodes) {
-                if (addedNode.nodeType !== Node.ELEMENT_NODE) continue;
-                if (!await handleInfoNode(calculator, addedNode)) continue;
-                found = true;
-                break;
-            }
-        }
-        if (mutation.type === 'attributes') {
-            if (found) break
-            const targetNode = mutation.target;
-            if (!await handleInfoNode(calculator, targetNode)) continue;
-            break;
-        }
-        if (found) break
-    }
 }
 
 function extractMatchId() {

@@ -9,8 +9,6 @@ const resourcesModule = new Module("resources", async () => {
     await loadAllHTMLs();
     await loadLevelIcons();
     isResourcesLoaded = true
-}, async () => {
-
 })
 
 async function loadAllHTMLs() {

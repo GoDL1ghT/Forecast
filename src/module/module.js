@@ -1,9 +1,12 @@
 class Module {
-    constructor(name,loadAction,unloadAction) {
+    constructor(name,loadAction,unloadAction = () => {}) {
         this.name = name
         this.loadAction = loadAction;
         this.unloadAction = unloadAction;
         this.isLoaded = false;
+        this.processedNodes = [];
+        this.nodesToRemove = [];
+        this.registeredObservers = new Map();
         this.tabId = 0
     }
 
@@ -18,6 +21,7 @@ class Module {
     async #reload(){
         println(`Module ${this.name} is reloading`);
         await this.unloadAction();
+        this.#releaseCaches();
         this.isLoaded = false
         await this.loadAction();
         this.isLoaded = true
@@ -28,8 +32,43 @@ class Module {
         if (!this.isLoaded) return
         println(`Module ${this.name} is disabling`);
         await this.unloadAction();
+        this.#releaseCaches();
         this.isLoaded = false
         println(`Module ${this.name} is successfully disabled`);
+    }
+
+    #releaseCaches() {
+        this.processedNodes.forEach((node) => {
+            node.removeAttribute('data-processed')
+        });
+        this.processedNodes.length = 0;
+
+        this.registeredObservers.forEach((observer) => {
+            observer.disconnect()
+        })
+        this.registeredObservers.clear()
+
+        this.nodesToRemove.forEach((node) => {
+            node.remove()
+        })
+        this.nodesToRemove.length = 0
+    }
+
+    processedNode(node) {
+        this.processedNodes.push(node)
+        node.setAttribute('data-processed', 'true')
+    }
+
+    registerObserver(key,observer) {
+        this.registeredObservers.set(key,observer)
+    }
+
+    isObserverRegistered(key) {
+        return this.registeredObservers.has(key)
+    }
+
+    removalNode(node) {
+        this.nodesToRemove.push(node)
     }
 
     async report(state) {
