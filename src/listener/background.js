@@ -33,11 +33,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     }
 });
 
-chrome.webNavigation.onHistoryStateUpdated.addListener((tabInfo) => {
-    if (!tabInfo.url || !faceitUrlRegex.test(tabInfo.url)) return;
-    console.log("URL изменен:", tabInfo);
-});
-
 chrome.tabs.onRemoved.addListener((tabId, _, tab) => {
     if (!tab.url || !faceitUrlRegex.test(tab.url)) return;
     previousUrlsByTabId.delete(tabId)

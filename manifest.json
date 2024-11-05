@@ -8,8 +8,7 @@
     "storage",
     "tabs",
     "scripting",
-    "activeTab",
-    "webNavigation"
+    "activeTab"
   ],
   "background": {
     "service_worker": "src/listener/background.js",
