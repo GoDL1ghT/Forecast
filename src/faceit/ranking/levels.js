@@ -265,6 +265,9 @@ async function insertStatsToEloBar(nick) {
 }
 
 function doAfterMatchroomLobbyAppear(callback) {
+    let existLobby = document.getElementById("marked-party-lobby")
+    if (existLobby) callback(existLobby)
+
     const observer = new MutationObserver(mutationsList => {
 
         function checkNodeAndChildren(node) {
@@ -274,6 +277,7 @@ function doAfterMatchroomLobbyAppear(callback) {
 
                 if (hasContainer) {
                     newLevelsModule.processedNode(node);
+                    node.id = "marked-party-lobby"
                     callback(node);
                     return;
                 }
