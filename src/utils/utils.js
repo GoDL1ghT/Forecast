@@ -60,14 +60,3 @@ function interpolateColor(color1, color2, factor) {
     const [r, g, b] = [r1 + (r2 - r1) * factor, g1 + (g2 - g1) * factor, b1 + (b2 - b1) * factor].map(c => Math.round(c).toString(16).padStart(2, '0'));
     return `#${r}${g}${b}`;
 }
-
-function doAfter(conditionFn, callback, interval = 50) { //todo перенести таски в модули, дабы можно было отключать их при выключении модуля
-    const task = setInterval(async () => {
-        if (conditionFn()) {
-            clearInterval(task);
-            await callback();
-        }
-    }, interval);
-
-    return () => clearInterval(task);
-}

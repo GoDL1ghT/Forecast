@@ -1,3 +1,83 @@
+class PartySlot {
+    nick = null
+
+    constructor(slotNode) {
+        this.slotNode = slotNode
+        this.newIcon = null
+        this.isEmpty = true
+        this.isShort = null
+    }
+
+    isShortStyle() {
+        let isShort = this.slotNode?.firstElementChild?.querySelector(`[class*='ButtonBase__Wrapper']`)?.querySelector(`[class*='PlayerCardListItem__Row-']`)
+        return !!isShort
+    }
+
+    getNickNode(isShort) {
+        let node
+        if (!isShort) {
+            node = this.slotNode?.firstElementChild?.querySelector('[role="button"]')?.children[1]?.children[0]
+        } else {
+            node = this.slotNode?.firstElementChild?.querySelector('[class*="Nickname__Name"]')
+        }
+        if (node?.innerText) this.isEmpty = false
+        return node
+    }
+
+    getLevelNode(isShort) {
+        let node
+        if (!isShort) {
+            node = this.slotNode?.firstElementChild?.querySelector('[role="button"]')?.children[2]
+        } else {
+            node = this.slotNode?.firstElementChild?.querySelector('[class*="SkillIcon__StyledSvg"]')
+        }
+        return node
+    }
+
+    isNeedRemove() {
+        let currentIsShort = this.isShortStyle()
+        if (this.isShort === null) this.isShort = currentIsShort
+
+        let isUpdated = false
+        if (this.isShort !== currentIsShort) {
+            isUpdated = true
+            this.isShort = currentIsShort
+        }
+        let nickNode = this.getNickNode(currentIsShort)
+        return nickNode && nickNode.isConnected && !isUpdated
+    }
+
+    async updateIcon() {
+        let newNick = this.getNickNode(this.isShort)?.innerText
+        if (!newNick) return
+        if (newNick !== this.nick || !this.newIcon) {
+            let levelNode = this.getLevelNode(this.isShort);
+            let oldIcon
+            let elo
+            if (!this.isShort) {
+                let textNode = levelNode.querySelector('[class*="styles__EloText"]')
+                let eloText = textNode.innerText
+                if (!eloText) return;
+                elo = parseInt(eloText.replace(/[\s,._]/g, ''), 10)
+                oldIcon = levelNode.querySelector('[class*="SkillIcon__StyledSvg"]')
+            } else {
+                let playerStatistic = await getPlayerStatsByNickName(newNick);
+                let {gameStats} = getStatistic(playerStatistic)
+                if (!gameStats) return
+                elo = parseInt(gameStats["faceit_elo"], 10);
+                oldIcon = levelNode
+            }
+            if (!oldIcon) return;
+            let [currentLevel, _] = getBarProgress(elo, "cs2");
+            let newIcon = levelIcons.get(currentLevel).cloneNode(true).firstChild
+            if (this.newIcon) this.newIcon.remove()
+            newIcon.appendToAndHide(oldIcon)
+            this.newIcon = newIcon
+            this.nick = newNick
+        }
+    }
+}
+
 const newLevelsModule = new Module("levels", async () => {
     const enabled = await isExtensionEnabled() && await isSettingEnabled("eloranking");
     if (!enabled) return;
@@ -19,8 +99,6 @@ const newLevelsModule = new Module("levels", async () => {
 
     const defineUrlType = (url) => {
         switch (true) {
-            case /^https:\/\/www\.faceit\.com\/\w+\/matchmaking$/.test(url):
-                return "lobby";
             case /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)(\/.*)?$/.test(url):
                 return "profile";
             case /^https:\/\/www\.faceit\.com\/\w+\/cs2\/room\/[\w\-]+(\/.*)?$/.test(url):
@@ -29,19 +107,9 @@ const newLevelsModule = new Module("levels", async () => {
     };
 
     let lobbyType = defineUrlType(window.location.href)
-    //todo Сделать для https://www.faceit.com/ru/cs2/rankings?regionId=EU лвла
-    if (lobbyType !== "profile") {
+    if (lobbyType === "matchroom") {
         doAfterNickNameNodeAppear(lobbyType, async (nickNode) => {
-            if (lobbyType === "lobby") {
-                let nick = nickNode.innerText
-                let playerStatistic = await getPlayerStatsByNickName(nick);
-                let {gameStats, gameType} = getStatistic(playerStatistic)
-                if (!gameStats) return
-                let elo = parseInt(gameStats["faceit_elo"], 10);
-                let [currentLevel, _] = getBarProgress(elo, gameType);
-                let newIcon = levelIcons.get(currentLevel).cloneNode(true)
-                handlePartyLobby(nickNode, nick, newIcon)
-            } else handleMatchRoomLobby(nickNode)
+            handleMatchRoomLobby(nickNode)
         })
     } else {
         doAfterMainLevelAppear(async (node) => {
@@ -60,7 +128,7 @@ const newLevelsModule = new Module("levels", async () => {
             if (isTopIcon) {
                 node.appendChild(icon)
             } else {
-                doAfter(() => !!node.getElementsByTagName("svg")[0], () => {
+                newLevelsModule.doAfter(() => !!node.getElementsByTagName("svg")[0], () => {
                     if (document.getElementById("new-elo-level-icon")) return
                     let oldIcon = node.getElementsByTagName("svg")[0]
                     icon.appendToAndHide(oldIcon)
@@ -69,9 +137,44 @@ const newLevelsModule = new Module("levels", async () => {
         })
     }
 
+    let partySlots = new Map();
+
+    doAfterMatchroomLobbyAppear(async (node) => {
+        newLevelsModule.doAfter(() => {
+            let firstChild = node.firstElementChild
+            return firstChild && firstChild?.children?.length === 2 && firstChild?.children[1]?.children?.length === 5
+        }, async () => {
+            let table = Array.from(node.firstElementChild.children)[1]
+            newLevelsModule.every(100, async () => {
+                if (partySlots.size < 5) {
+                    let i = 0
+                    Array.from(table.children).forEach((slot) => {
+                        if (slot.id !== `party-slot-${i}`) {
+                            slot.id = `party-slot-${i}`
+                            partySlots.set(`party-slot-${i}`, new PartySlot(slot))
+                        }
+                        i++
+                    })
+                }
+
+                for (let j = 0; j < partySlots.size; j++) {
+                    let id = `party-slot-${j}`
+                    let slot = partySlots.get(id)
+                    if (!slot.isNeedRemove() && !slot.isEmpty) {
+                        partySlots.delete(id)
+                        slot.slotNode.id = ""
+                        if (slot.newIcon) slot.newIcon.remove()
+                        continue
+                    }
+                    await slot.updateIcon()
+                }
+            })
+        })
+    })
+
     doAfterNickNameCardNodeAppear(async (node) => {
         let innerNode = node.querySelector('[class*="Tag__Container-"]')
-        doAfter(() => innerNode.childNodes && innerNode.childNodes.length > 1, () => {
+        newLevelsModule.doAfter(() => innerNode.childNodes && innerNode.childNodes.length > 1, () => {
             let eloText = innerNode.querySelector('[class*="Text-sc"]').firstChild.firstElementChild.innerText
             let elo = parseInt(eloText.replace(/[\s,._]/g, ''), 10)
             let oldIcon = innerNode.childNodes[0]
@@ -82,14 +185,14 @@ const newLevelsModule = new Module("levels", async () => {
     })
 
     doAfterSearchPlayerNodeAppear(async (node) => {
-        doAfter(() => node.childNodes && node.childNodes.length > 2, async () => {
+        newLevelsModule.doAfter(() => node.childNodes && node.childNodes.length > 2, async () => {
             let currentNode = node.childNodes[1];
             for (let i = 0; i < 7; i++) {
                 currentNode = currentNode.firstElementChild;
                 if (currentNode.tagName === "SPAN" && i === 0) break
             }
             let nick = currentNode?.innerText;
-            doAfter(() => Array.from(node?.childNodes[2]?.firstElementChild?.childNodes).some(node => node.tagName === "svg"), async () => {
+            newLevelsModule.doAfter(() => Array.from(node?.childNodes[2]?.firstElementChild?.childNodes).some(node => node.tagName === "svg"), async () => {
                 let oldIcon = Array.from(node.childNodes[2].firstElementChild.childNodes).find(node => node.tagName === "svg")
                 let playerStatistic = await getPlayerStatsByNickName(nick);
                 let {gameStats, gameType} = getStatistic(playerStatistic)
@@ -115,10 +218,10 @@ function getStatistic(playerStatistic) {
 
 function handleMatchRoomLobby(nickNode) {
     let playerCardNodes = nickNode.parentNode.parentNode.parentNode.parentNode.parentNode.children
-    doAfter(() => playerCardNodes.length === 3, () => {
+    newLevelsModule.doAfter(() => playerCardNodes.length === 3, () => {
         let section = playerCardNodes[playerCardNodes.length - 1].firstChild.childNodes
-        doAfter(() => section.length === 3, () => {
-            let elo = parseInt(section[1].firstElementChild.firstElementChild.innerText,10)
+        newLevelsModule.doAfter(() => section.length === 3, () => {
+            let elo = parseInt(section[1].firstElementChild.firstElementChild.innerText, 10)
             let [currentLevel, _] = getBarProgress(elo, "cs2");
             let newIcon = levelIcons.get(currentLevel).cloneNode(true).childNodes[0]
             let oldIcon = section[playerCardNodes.length - 1];
@@ -129,41 +232,6 @@ function handleMatchRoomLobby(nickNode) {
             }
         })
     })
-}
-
-function handlePartyLobby(nickNode, nick, newIcon) {
-    const mainNode = nickNode.parentNode;
-    let parent = mainNode.parentNode;
-    let isShortVariant = false
-    if (Array.from(parent.classList).some(className => className.includes('PlayerCardListItem__Row-'))) {
-        parent = parent.parentNode
-        isShortVariant = true
-    }
-
-    isShortVariant ? handleShortVariant(parent, nick, newIcon) : handleFullVariant(parent, mainNode, newIcon)
-}
-
-function handleFullVariant(node, mainNode, newIcon) {
-    const siblings = Array.from(node.children);
-    const index = siblings.indexOf(mainNode);
-    const eloIconContainer = siblings[index + 1];
-    let levelNode = eloIconContainer.children
-    doAfter(
-        () => levelNode.length === 2,
-        () => {
-            newIcon.firstChild.appendToAndHide(levelNode[0])
-        }
-    )
-}
-
-function handleShortVariant(node, nick, newIcon) {
-    doAfter(
-        () => node.children.length === 4,
-        async () => {
-            const siblings = Array.from(node.children)
-            const eloIcon = siblings[3];
-            newIcon.firstChild.appendToAndHide(eloIcon)
-        })
 }
 
 async function insertStatsToEloBar(nick) {
@@ -196,20 +264,13 @@ async function insertStatsToEloBar(nick) {
     }
 }
 
-function doAfterFriendNodeAppear(callback) {
-    // [class*=FriendLine__Holder]
-    let existFriendNodes = document.querySelectorAll('[class*="FriendLine__Holder"]')
-    if (existFriendNodes && existFriendNodes.length > 0) {
-        existFriendNodes.forEach(node => newLevelsModule.processedNode(node))
-        callback(existFriendNodes)
-    }
-
+function doAfterMatchroomLobbyAppear(callback) {
     const observer = new MutationObserver(mutationsList => {
 
         function checkNodeAndChildren(node) {
             if (node.nodeType === Node.ELEMENT_NODE) {
                 if (node.hasAttribute('data-processed')) return;
-                const hasContainer = node.matches('[class*="FriendLine__Holder"]');
+                const hasContainer = node.matches('[class*=Matchmaking__PlayHolder]');
 
                 if (hasContainer) {
                     newLevelsModule.processedNode(node);
@@ -235,7 +296,7 @@ function doAfterFriendNodeAppear(callback) {
         subtree: true
     });
 
-    newLevelsModule.registerObserver("find-result-bar-node-observer", observer);
+    newLevelsModule.registerObserver("matchroom-lobby-observer", observer);
 }
 
 function doAfterSearchPlayerNodeAppear(callback) {

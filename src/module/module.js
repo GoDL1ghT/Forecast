@@ -7,6 +7,7 @@ class Module {
         this.processedNodes = [];
         this.nodesToRemove = [];
         this.registeredObservers = new Map();
+        this.tasks = [];
         this.tabId = 0
     }
 
@@ -52,6 +53,11 @@ class Module {
             node.remove()
         })
         this.nodesToRemove.length = 0
+
+        this.tasks.forEach((task) => {
+            clearInterval(task)
+        })
+        this.tasks.length = 0
     }
 
     processedNode(node) {
@@ -69,6 +75,23 @@ class Module {
 
     removalNode(node) {
         this.nodesToRemove.push(node)
+    }
+
+    doAfter(conditionFn, callback, interval = 50) {
+        const task = this.every(interval, async () => {
+            if (conditionFn()) {
+                task()
+                await callback();
+            }
+        })
+
+        return () => task();
+    }
+
+    every(period, callback) {
+        const task = setInterval(callback,period)
+        this.tasks.push(task)
+        return () => clearInterval(task)
     }
 
     async report(state) {
