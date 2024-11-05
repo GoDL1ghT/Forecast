@@ -41,21 +41,21 @@
         }
 
         .levels-container {
-            display: flex; /* Устанавливаем флекс-контейнер */
-            width: 100%; /* Растягиваем на всю ширину */
+            display: flex;
+            width: 100%;
             margin-bottom: 16px;
         }
 
         .level {
-            flex: 0 0 calc(92% / 19); /* Уменьшаем ширину для первых 19 уровней */
+            flex: 0 0 calc(92% / 19);
             border-right: 1px solid rgb(75, 78, 78);
             text-align: center;
             padding: 10px 0;
-            position: relative; /* Для позиционирования прогресс-бара */
+            position: relative;
         }
 
         .level-large {
-            flex: 1; /* Занимает оставшееся пространство */
+            flex: 1;
             text-align: center;
             padding: 10px 0;
             position: relative;
@@ -75,7 +75,7 @@
 
         .progress-bar-container {
             position: absolute;
-            bottom: 0; /* Сдвигаем прогресс-бар выше на 4 пикселя */
+            bottom: 0;
             left: 0;
             width: 100%;
             height: 4px;
@@ -85,8 +85,8 @@
 
         .progress-bar {
             height: 100%;
-            background: rgba(255, 85, 0, 1); /* Динамический цвет для прогресс-бара */
-            width: 0; /* Начальная ширина, изменяется через JS */
+            background: rgba(255, 85, 0, 1);
+            width: 0;
         }
 
         .divider {
@@ -114,7 +114,6 @@
         </div>
 
         <div class="levels-container">
-            <!-- Уровни с 1 по 19 -->
             <div class="level" id="level-node-1" range="1-500">
                 <span title="Skill Level 1"></span>
                 <div class="level-value">1</div>
@@ -249,7 +248,6 @@
                 </div>
             </div>
 
-            <!-- Уровень 20, увеличен по ширине -->
             <div class="level-large" id="level-node-20">
                 <span title="Skill Level 20"></span>
                 <div class="level-value">4501 – ∞</div>

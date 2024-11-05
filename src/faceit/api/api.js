@@ -94,7 +94,7 @@ async function getApiKey() {
 
 function setCookie(name, value, minutes) {
     const date = new Date();
-    date.setTime(date.getTime() + (minutes * 60 * 1000)); // Устанавливаем время истечения в миллисекундах
+    date.setTime(date.getTime() + (minutes * 60 * 1000));
     const expires = "expires=" + date.toUTCString();
     document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/;domain=.faceit.com;secure";
 }

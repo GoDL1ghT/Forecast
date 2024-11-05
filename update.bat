@@ -49,6 +49,6 @@ curl -L -o src\visual\styles.css %BASE_URL%/src/visual/styles.css
 curl -L -o _locales\en\messages.json %BASE_URL%/_locales/en/messages.json
 curl -L -o manifest.json %BASE_URL%/manifest.json
 
-echo Загрузка завершена.
+echo Load completed.
 
 endlocal

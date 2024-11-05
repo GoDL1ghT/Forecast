@@ -46,8 +46,6 @@ function insertStatsIntoNode(root, score, raiting, kd, kdkr, adr) {
         let singleChild = fourthNode.children[0];
         myNewNode.appendToAndHide(singleChild)
         insertRow(myNewNode, score, raiting, kd, kdkr, adr)
-    } else {
-        console.error("Четвёртая нода или её единственный дочерний элемент не найдены.");
     }
 }
 
