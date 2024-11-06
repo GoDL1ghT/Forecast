@@ -6,9 +6,7 @@
   "default_locale": "en",
   "permissions": [
     "storage",
-    "tabs",
-    "scripting",
-    "activeTab"
+    "tabs"
   ],
   "background": {
     "service_worker": "src/listener/background.js",
