@@ -10,6 +10,7 @@ function error(...args) {
 
 function hideNode(node) {
     node.style.display = 'none';
+    node.setAttribute("hided","true")
 }
 
 Element.prototype.appendTo = function(node) {

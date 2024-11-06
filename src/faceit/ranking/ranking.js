@@ -144,18 +144,37 @@ function doAfterStatisticNodeAppear(callback) {
         null,
         XPathResult.FIRST_ORDERED_NODE_TYPE,
         null
-    ).singleNodeValue?.parentElement
+    ).singleNodeValue?.parentElement.parentElement
     if (element) callback(element)
-
     const observer = new MutationObserver(mutationsList => {
-        let found = !!document.getElementById("forecast-statistic-table");
+        let found = !!document.getElementById("forecast-statistic-table")
+        let removed = !!document.getElementById("hided-enchancer-table")
+
+        function removeRepeekNodeIfExist(node) {
+            if (removed) return;
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                let parent = node?.parentElement?.parentElement
+                if (node.innerText === "LEVEL PROGRESS" && !parent.getAttribute("hided") && parent.id !== "forecast-statistic-table") {
+                    hideNode(parent)
+                    parent.id = "hided-enchancer-table"
+                    removed = true
+                    return;
+                }
+                node.childNodes.forEach(removeRepeekNodeIfExist);
+            }
+        }
 
         function checkNodeAndChildren(node) {
             if (found) return;
-
             if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.textContent.includes("Level Progress")) {
-                    callback(node);
+                let targetNode = document.getElementById("content-grid-element-3")
+                if (targetNode) {
+                    let newNode = document.createElement("div")
+                    rankingModule.doAfter(() => targetNode.querySelector('[class*="styles__StatsSection"]'), () => {
+                        if (!!document.getElementById("forecast-statistic-table")) return
+                        targetNode.children[0].insertAdjacentElement("afterend", newNode)
+                        callback(newNode);
+                    })
                     found = true;
                     return;
                 }
@@ -171,6 +190,16 @@ function doAfterStatisticNodeAppear(callback) {
                 }
             }
             if (found) break;
+        }
+
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                for (const node of mutation.addedNodes) {
+                    if (removed) break;
+                    removeRepeekNodeIfExist(node);
+                }
+            }
+            if (removed) break;
         }
     });
 
