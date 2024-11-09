@@ -14,9 +14,8 @@ This project is a browser extension that retrieves and displays statistics for F
 
 ### Method 1: Manual Installation
 
-1. Download the source code.
-2. Go to [`chrome://extensions/`](chrome://extensions/) (If necessary, enable developer mode) and click "Load unpacked" to upload the folder.
-3. Open Faceit websibe and navigate to the matchroom page.
+1. Just install from [Chrome Webstore](https://chromewebstore.google.com/detail/faceit-forecast/mpkkcddegpblmobincjkbpgfcbejjbcp)
+2. Open the Faceit website and navigate to the matchroom page.
 
 ### Method 2: Batch Script Installation
 
