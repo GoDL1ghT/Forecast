@@ -68,7 +68,7 @@ class PartySlot {
                 oldIcon = levelNode
             }
             if (!oldIcon) return;
-            let [currentLevel, _] = getBarProgress(elo, "cs2");
+            let currentLevel = getLevel(elo, "cs2");
             let newIcon = levelIcons.get(currentLevel).cloneNode(true).firstChild
             if (this.newIcon) this.newIcon.remove()
             newIcon.appendToAndHide(oldIcon)
@@ -108,8 +108,10 @@ const newLevelsModule = new Module("levels", async () => {
 
     let lobbyType = defineUrlType(window.location.href)
     if (lobbyType === "matchroom") {
-        doAfterNickNameNodeAppear(lobbyType, async (nickNode) => {
-            handleMatchRoomLobby(nickNode)
+        let matchId = extractMatchId()
+        let matchData = await fetchOldMatchStats(matchId);
+        doAfterNickNameNodeAppear(async (nickNode) => {
+            handleMatchRoomLobby(nickNode, matchData)
         })
     } else {
         doAfterMainLevelAppear(async (node) => {
@@ -121,7 +123,7 @@ const newLevelsModule = new Module("levels", async () => {
             let isTopIcon = node.getElementsByTagName("i").length > 0
             if (!gameStats) return
             let elo = parseInt(gameStats["faceit_elo"], 10);
-            let [currentLevel, _] = getBarProgress(elo, gameType);
+            let currentLevel = getLevel(elo, gameType);
             let icon = levelIcons.get(currentLevel).cloneNode(true).cloneNode(true).childNodes[0]
             icon.id = "new-elo-level-icon"
             newLevelsModule.removalNode(icon);
@@ -178,7 +180,7 @@ const newLevelsModule = new Module("levels", async () => {
             let eloText = innerNode.querySelector('[class*="Text-sc"]').firstChild.firstElementChild.innerText
             let elo = parseInt(eloText.replace(/[\s,._]/g, ''), 10)
             let oldIcon = innerNode.childNodes[0]
-            let [currentLevel, _] = getBarProgress(elo, "cs2");
+            let currentLevel = getLevel(elo, "cs2");
             let newIcon = levelIcons.get(currentLevel).cloneNode(true)
             newIcon.firstElementChild.appendToAndHide(oldIcon)
         })
@@ -198,7 +200,7 @@ const newLevelsModule = new Module("levels", async () => {
                 let {gameStats, gameType} = getStatistic(playerStatistic)
                 if (!gameStats) return
                 let elo = parseInt(gameStats["faceit_elo"], 10);
-                let [currentLevel, _] = getBarProgress(elo, gameType);
+                let currentLevel = getLevel(elo, gameType);
                 let icon = levelIcons.get(currentLevel).cloneNode(true).childNodes[0]
                 icon.appendToAndHide(oldIcon)
             })
@@ -216,13 +218,25 @@ function getStatistic(playerStatistic) {
     return {gameStats, gameType}
 }
 
-function handleMatchRoomLobby(nickNode) {
+function findPlayerInTeamByNickname(teams, nickname) {
+    for (let team of [teams["faction1"], teams["faction2"]]) {
+        let player = team["roster"].find(player => player.nickname === nickname);
+        if (player) {
+            return player;
+        }
+    }
+    return null;
+}
+
+function handleMatchRoomLobby(nickNode, matchData) {
     let playerCardNodes = nickNode.parentNode.parentNode.parentNode.parentNode.parentNode.children
+    let nickname = nickNode.innerText
+    let playerData = findPlayerInTeamByNickname(matchData["teams"], nickname)
+    let elo = parseInt(playerData["elo"], 10)
     newLevelsModule.doAfter(() => playerCardNodes.length === 3, () => {
         let section = playerCardNodes[playerCardNodes.length - 1].firstChild.childNodes
         newLevelsModule.doAfter(() => section.length === 3, () => {
-            let elo = parseInt(section[1].firstElementChild.firstElementChild.innerText, 10)
-            let [currentLevel, _] = getBarProgress(elo, "cs2");
+            let currentLevel = getLevel(elo, "cs2");
             let newIcon = levelIcons.get(currentLevel).cloneNode(true).childNodes[0]
             let oldIcon = section[playerCardNodes.length - 1];
             if (typeof oldIcon.className === "string" && oldIcon.className.includes("BadgeHolder__Holder")) {
@@ -242,7 +256,8 @@ async function insertStatsToEloBar(nick) {
     document.getElementById("user-url").setAttribute("href", `/${extractLanguage()}/players/${nick}/stats/${gameType}`)
 
     let elo = parseInt(gameStats["faceit_elo"], 10);
-    let [currentLevel, progressBarPercentage] = getBarProgress(elo, gameType);
+    let currentLevel = getLevel(elo,gameType)
+    let progressBarPercentage = getBarProgress(elo, gameType);
     let node = document.getElementById("skill-current-level")
     node.innerHTML = levelIcons.get(currentLevel).innerHTML
 
@@ -267,123 +282,84 @@ async function insertStatsToEloBar(nick) {
 function doAfterMatchroomLobbyAppear(callback) {
     let existLobby = document.getElementById("marked-party-lobby")
     if (existLobby) callback(existLobby)
+    newLevelsModule.observe(function search(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.hasAttribute('data-processed')) return;
+            const hasContainer = node.matches('[class*=Matchmaking__PlayHolder]');
 
-    const observer = new MutationObserver(mutationsList => {
-
-        function checkNodeAndChildren(node) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.hasAttribute('data-processed')) return;
-                const hasContainer = node.matches('[class*=Matchmaking__PlayHolder]');
-
-                if (hasContainer) {
-                    newLevelsModule.processedNode(node);
-                    node.id = "marked-party-lobby"
-                    callback(node);
-                    return;
-                }
-                node.childNodes.forEach(checkNodeAndChildren);
+            if (hasContainer) {
+                newLevelsModule.processedNode(node);
+                node.id = "marked-party-lobby"
+                callback(node);
+                return;
             }
+            node.childNodes.forEach(search);
         }
-
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    checkNodeAndChildren(node);
-                }
-            }
-        }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true
-    });
-
-    newLevelsModule.registerObserver("matchroom-lobby-observer", observer);
+    })
 }
 
 function doAfterSearchPlayerNodeAppear(callback) {
     const targetHrefPattern = new RegExp(`^/${extractLanguage()}/players\/([a-zA-Z0-9-_]+)$`);
 
-    const observer = new MutationObserver(mutationsList => {
+    newLevelsModule.observe(function search(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.hasAttribute('data-processed')) return;
+            const href = node.getAttribute('href');
+            let doubleParent = node?.parentElement?.parentElement
+            if (!doubleParent) return;
+            const hasContainer = doubleParent.matches('[class*="styles__PlayersListContainer-"]') || doubleParent.matches('[class*="styles__SectionContainer"]');
 
-        function checkNodeAndChildren(node) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.hasAttribute('data-processed')) return;
-                const href = node.getAttribute('href');
-                let doubleParent = node?.parentElement?.parentElement
-                if (!doubleParent) return;
-                const hasContainer = doubleParent.matches('[class*="styles__PlayersListContainer-"]') || doubleParent.matches('[class*="styles__SectionContainer"]');
-
-                if (href && targetHrefPattern.test(href) && hasContainer) {
-                    newLevelsModule.processedNode(node);
-                    callback(node);
-                    return;
-                }
-                node.childNodes.forEach(checkNodeAndChildren);
+            if (href && targetHrefPattern.test(href) && hasContainer) {
+                newLevelsModule.processedNode(node);
+                callback(node);
+                return;
             }
+            node.childNodes.forEach(search);
         }
-
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    checkNodeAndChildren(node);
-                }
-            }
-        }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true
-    });
-
-    newLevelsModule.registerObserver("find-result-bar-node-observer", observer);
+    })
 }
 
 function doAfterStatisticBarNodeAppear(nick, callback) {
     if (document.getElementById("statistic-progress-bar")) return
     const targetHrefPattern = new RegExp(`^/${extractLanguage()}/players/${nick}/stats/`);
 
-    const observer = new MutationObserver(mutationsList => {
-        let found = !!document.getElementById("statistic-progress-bar");
+    let found = !!document.getElementById("statistic-progress-bar");
+    let removed = !!document.getElementById("hided-elo-bar");
 
-        function checkNodeAndChildren(node) {
-            if (found) return;
+    newLevelsModule.observe(function searchForRemove(node) {
+        if (removed) return;
 
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                const href = node.getAttribute('href');
-                const hasSvg = node.querySelector('svg');
-
-                if (href && targetHrefPattern.test(href) && hasSvg) {
-                    callback(node);
-                    found = true;
-                    return;
-                }
-                node.childNodes.forEach(checkNodeAndChildren);
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const href = node.getAttribute('href');
+            const hasSvg = node.querySelector('svg');
+            let targetNode = node.parentElement
+            if (href && targetHrefPattern.test(href) && hasSvg && targetNode.id !== "user-url") {
+                hideNode(targetNode)
+                targetNode.id = "hided-elo-bar"
+                removed = true;
+                return;
             }
+            node.childNodes.forEach(searchForRemove);
         }
+    })
 
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    if (found) break;
-                    checkNodeAndChildren(node);
-                }
+    newLevelsModule.observe(function search(node) {
+        if (found) return;
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            let selector = '#main-header-height-wrapper div[class*="styles__ProfileContainer"]'
+            let appearNode = document.querySelector(selector)
+            if (appearNode) {
+                let newNode = document.createElement("div")
+                let result = appearNode.parentElement
+                result.children[1].insertAdjacentElement("afterend", newNode)
+                callback(newNode);
+                found = true;
+                return;
             }
-            if (found) break;
+            node.childNodes.forEach(search);
         }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true
-    });
-
-    newLevelsModule.registerObserver("stats-bar-node-observer", observer);
+    })
 }
 
 function doAfterSelfNickNodeAppear(callback) {
@@ -394,40 +370,20 @@ function doAfterSelfNickNodeAppear(callback) {
         callback(selfNickNode.innerText)
     }
 
-    const observer = new MutationObserver(mutationsList => {
-        let found = !!document.getElementById("self-nickname-node")
+    let found = !!document.getElementById("self-nickname-node")
 
-        function checkNodeAndChildren(node) {
-            if (found) return;
+    newLevelsModule.observe(function search(node) {
+        if (found) return;
 
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.matches('[class*="styles__NicknameText-"]')) {
-                    callback(node.innerText)
-                    found = true;
-                    return;
-                }
-                node.childNodes.forEach(checkNodeAndChildren);
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches('[class*="styles__NicknameText-"]')) {
+                callback(node.innerText)
+                found = true;
+                return;
             }
+            node.childNodes.forEach(search);
         }
-
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    if (found) break;
-                    checkNodeAndChildren(node);
-                }
-            }
-            if (found) break;
-        }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true
-    });
-
-    newLevelsModule.registerObserver("nick-selfnode-observer", observer);
+    })
 }
 
 function doAfterMainLevelAppear(callback) {
@@ -437,158 +393,73 @@ function doAfterMainLevelAppear(callback) {
         return
     }
 
-    const observer = new MutationObserver(mutationsList => {
-        let found = false;
+    let found = false;
 
-        function checkNodeAndChildren(node) {
-            if (found) return;
-            if (node.nodeType === Node.ELEMENT_NODE && node.matches('[class*="styles__TitleContainer-"]')) {
-                const svgObserver = new MutationObserver(innerMutations => {
-                    for (const innerMutation of innerMutations) {
-                        if (innerMutation.type === 'childList') {
-                            if (node.querySelector('svg')) {
-                                callback(node);
-                                found = true;
-                                svgObserver.disconnect();
-                                break;
-                            }
+    newLevelsModule.observe(function search(node) {
+        if (found) return;
+        if (node.nodeType === Node.ELEMENT_NODE && node.matches('[class*="styles__TitleContainer-"]')) {
+            found = true;
+            const svgObserver = new MutationObserver(innerMutations => {
+                for (const innerMutation of innerMutations) {
+                    if (innerMutation.type === 'childList') {
+                        if (node.querySelector('svg')) {
+                            callback(node);
+                            svgObserver.disconnect();
+                            break;
                         }
                     }
-                });
-                svgObserver.observe(node, {
-                    childList: true,
-                    subtree: true
-                });
-            }
-            node.childNodes.forEach(checkNodeAndChildren);
-        }
-
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    checkNodeAndChildren(node);
-                    if (found) return;
                 }
-            }
-            if (found) return;
+            });
+            svgObserver.observe(node, {
+                childList: true,
+                subtree: true
+            });
         }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true
-    });
-
-    newLevelsModule.registerObserver("main-level-observer", observer);
+        node.childNodes.forEach(search);
+    })
 }
 
 function doAfterWidgetEloNodeAppear(callback) {
-    const observer = new MutationObserver(mutationsList => {
-        let found = !!document.getElementById("edited-widget");
-
-        function checkNodeAndChildren(node) {
-            if (found) return;
-
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.matches('[class*="EloWidget__Holder-"]')) {
-                    callback(node)
-                    found = true;
-                    return;
-                }
-                node.childNodes.forEach(checkNodeAndChildren);
+    let found = !!document.getElementById("edited-widget");
+    newLevelsModule.observe(function search(node) {
+        if (found) return;
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches('[class*="EloWidget__Holder-"]')) {
+                callback(node)
+                found = true;
+                return;
             }
+            node.childNodes.forEach(search);
         }
-
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    if (found) break;
-                    checkNodeAndChildren(node);
-                }
-            }
-            if (found) break;
-        }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true
-    });
-
-    newLevelsModule.registerObserver("widget-elo-observer", observer);
+    })
 }
 
 function doAfterNickNameCardNodeAppear(callback) {
-    const observer = new MutationObserver(mutationsList => {
-
-        function checkNodeAndChildren(node) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.matches('[class*="UserStats__StatsContainer-"]') || node.querySelector('[class*="UserStats__StatsContainer-"]')) {
-                    callback(node)
-                    return;
-                }
-                node.childNodes.forEach(checkNodeAndChildren);
+    newLevelsModule.observe(function search(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches('[class*="UserStats__StatsContainer-"]') || node.querySelector('[class*="UserStats__StatsContainer-"]')) {
+                callback(node)
+                return;
             }
+            node.childNodes.forEach(search);
         }
-
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    checkNodeAndChildren(node);
-                }
-            }
-        }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true
-    });
-
-    newLevelsModule.registerObserver("nick-cardnode-observer", observer);
+    })
 }
 
-function doAfterNickNameNodeAppear(lobbyType, callback) {
-    if (lobbyType === "profile") {
-        let node = document.getElementById("player-profile-nick-node")
-        if (node) {
-            callback(node)
-            return
-        }
-    }
-
-    const observer = new MutationObserver(mutationsList => {
-
-        function checkNodeAndChildren(node) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.matches('[class*="styles__Nickname-"]') || node.matches('[class*="Nickname__Name-"]')) {
-                    if (lobbyType === "profile") node.id = "player-profile-nick-node"
-                    callback(node)
-                    return;
-                }
-                node.childNodes.forEach(checkNodeAndChildren);
+function doAfterNickNameNodeAppear(callback) {
+    let nodes = document.querySelectorAll('[class*="Nickname__Name-"]')
+    nodes.forEach((node) => {
+        callback(node)
+    })
+    newLevelsModule.observe(function search(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches('[class*="styles__Nickname-"]') || node.matches('[class*="Nickname__Name-"]')) {
+                callback(node)
+                return;
             }
+            node.childNodes.forEach(search);
         }
-
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    checkNodeAndChildren(node);
-                }
-            }
-        }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true
-    });
-
-    newLevelsModule.registerObserver("nick-node-observer", observer);
+    })
 }
 
 moduleListener(newLevelsModule);

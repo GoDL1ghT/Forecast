@@ -10,14 +10,14 @@ function error(...args) {
 
 function hideNode(node) {
     node.style.display = 'none';
-    node.setAttribute("hided","true")
+    node.setAttribute("hided", "true")
 }
 
-Element.prototype.appendTo = function(node) {
-    node.insertAdjacentElement('afterend',this);
+Element.prototype.appendTo = function (node) {
+    node.insertAdjacentElement('afterend', this);
 };
 
-Element.prototype.appendToAndHide = function(node) {
+Element.prototype.appendToAndHide = function (node) {
     this.appendTo(node);
     hideNode(node);
 };

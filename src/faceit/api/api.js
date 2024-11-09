@@ -1,20 +1,23 @@
-const baseUrl = "https://open.faceit.com/data/v4";
+const baseUrlV4 = "https://open.faceit.com/data/v4";
 
 const playerDataCache = new Map();
 const playerGamesDataCache = new Map();
-const competitionCache = new Map()
 const matchDataCache = new Map();
+const oldMatchDataCache = new Map();
 const matchDataStatsCache = new Map();
 
-async function fetchData(cache, key, url, errorMsg) {
+async function fetchV4(cache, key, url, errorMsg) {
     const cachedData = cache.get(key);
     if (cachedData) return cachedData;
 
     const apiKey = await getApiKey();
     const response = await fetch(url, {
+        method: 'GET',
         headers: {
-            'Authorization': `Bearer ${apiKey}`
-        }
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include'
     });
 
     if (!response.ok) {
@@ -26,49 +29,73 @@ async function fetchData(cache, key, url, errorMsg) {
     return newData;
 }
 
+
 async function fetchMatchStats(matchId) {
-    return fetchData(
+    return fetchV4(
         matchDataCache,
         matchId,
-        `${baseUrl}/matches/${matchId}`,
+        `${baseUrlV4}/matches/${matchId}`,
         "Error when retrieving match statistics"
     );
 }
 
 async function fetchMatchStatsDetailed(matchId) {
-    return fetchData(
+    return fetchV4(
         matchDataStatsCache,
         matchId,
-        `${baseUrl}/matches/${matchId}/stats`,
+        `${baseUrlV4}/matches/${matchId}/stats`,
         "Error when retrieving detailed match statistics"
     );
 }
 
 async function getPlayerGameStats(playerId, game, matchAmount = 20) {
-    return await fetchData(
+    return await fetchV4(
         playerGamesDataCache,
         playerId,
-        `${baseUrl}/players/${playerId}/games/${game}/stats?limit=${matchAmount}`,
+        `${baseUrlV4}/players/${playerId}/games/${game}/stats?limit=${matchAmount}`,
         "Error when requesting player game data"
     );
 }
 
 async function getPlayerStatsById(playerId) {
-    return fetchData(
+    return fetchV4(
         playerDataCache,
         playerId,
-        `${baseUrl}/players/${playerId}`,
+        `${baseUrlV4}/players/${playerId}`,
         "Error when requesting player data by ID"
     );
 }
 
 async function getPlayerStatsByNickName(nickname) {
-    return fetchData(
+    return fetchV4(
         playerDataCache,
         nickname,
-        `${baseUrl}/players?nickname=${encodeURIComponent(nickname)}`,
+        `${baseUrlV4}/players?nickname=${encodeURIComponent(nickname)}`,
         "Error when requesting player data by nickname"
     );
+}
+
+async function fetchOldMatchStats(matchId) {
+    let cachedData = oldMatchDataCache.get(matchId)
+    if (cachedData) return cachedData
+
+    const token = getApiKey();
+    const url = `https://api.faceit.com/match/v2/match/${matchId}`;
+    const options = {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+    };
+
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        error(`Error: ${response.statusText}`);
+    }
+
+    return (await response.json())["payload"];
 }
 
 function extractPlayerNick() {
@@ -81,6 +108,16 @@ function extractGameType() {
     return match ? match[1] : null;
 }
 
+function extractMatchId() {
+    const match = window.location.href.match(/room\/([a-z0-9-]+)/i);
+    return match ? match[1] : null;
+}
+
+function extractLanguage() {
+    const url = window.location.href;
+    const match = url.match(/https:\/\/www\.faceit\.com\/([^/]+)\//);
+    return match ? match[1] : null;
+}
 
 async function getApiKey() {
     let apiKey = getCookie("forecast-api-key")

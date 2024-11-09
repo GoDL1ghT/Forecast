@@ -53,7 +53,7 @@ async function saveSettings() {
     const eloranking = document.getElementById('eloranking').checked;
     const matchhistory = document.getElementById('matchhistory').checked;
 
-    await chrome.storage.sync.set({ isEnabled, sliderValue, matchroom, eloranking, matchhistory });
+    await chrome.storage.sync.set({isEnabled, sliderValue, matchroom, eloranking, matchhistory});
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -64,8 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (toggleExtension) {
         toggleExtension.addEventListener('change', async function () {
             const isEnabled = this.checked;
-            await chrome.storage.sync.set({ isEnabled });
-            console.log('Extension enabled:', isEnabled);
+            await chrome.storage.sync.set({isEnabled});
         });
     }
 
@@ -73,8 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (matchroom) {
         matchroom.addEventListener('change', async function () {
             const matchroom = this.checked;
-            await chrome.storage.sync.set({ matchroom });
-            console.log('Extension matchroom enabled:', matchroom);
+            await chrome.storage.sync.set({matchroom});
         });
     }
 
@@ -82,8 +80,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (eloranking) {
         eloranking.addEventListener('change', async function () {
             const eloranking = this.checked;
-            await chrome.storage.sync.set({ eloranking });
-            console.log('Extension eloranking enabled:', eloranking);
+            await chrome.storage.sync.set({eloranking});
         });
     }
 
@@ -91,8 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (matchhistory) {
         matchhistory.addEventListener('change', async function () {
             const matchhistory = this.checked;
-            await chrome.storage.sync.set({ matchhistory });
-            console.log('Setting matchhistory enabled:', matchhistory);
+            await chrome.storage.sync.set({matchhistory});
         });
     }
 

@@ -20,7 +20,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         const currentUrl = tab.url;
         const previousUrl = previousUrlsByTabId.get(tabId) || "";
 
-        console.log(`Tab updated: ${previousUrl} -> ${currentUrl}, ${tabId}`);
         if (await reloadPageIfStatsPage(currentUrl, tab, tabId)) return;
         await loadResourcesIfNeeded(tabId);
         await handleModules(currentUrl, previousUrl, tabId);

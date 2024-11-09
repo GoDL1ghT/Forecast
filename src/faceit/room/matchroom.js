@@ -34,12 +34,11 @@ class TeamWinRateCalculator {
         let table = document.getElementById("player-table")
         table.id = `player-table-${playerId}`
         table.closest(`[class*="UserCardPopup__UserCardContainer"]`).style.minHeight = "530px"
-        matchRoomModule.removalNode(htmlResource);
     }
 
     async printResults(targetNode) {
-        this.insertHtmlToTeamCard('src/visual/tables/team.html', targetNode);
-
+        let innerNode = targetNode.querySelector('[class*="Overview__Stack"]')
+        this.insertHtmlToTeamCard('src/visual/tables/team.html', innerNode);
         this.results.forEach((teamMap, teamName) => {
             const teamMatches = this.aggregateTeamMatches(teamMap);
             this.printTeamMatches(teamName, teamMatches);
@@ -107,8 +106,6 @@ class TeamWinRateCalculator {
     }
 
     async findUserCard(playerId, callback) {
-        if (matchRoomModule.isObserverRegistered(playerId)) return;
-
         const player = await getPlayerStatsById(playerId);
         const currentCountry = extractLanguage();
         const match = player.faceit_url.match(/\/players\/[^/]+/);
@@ -120,36 +117,17 @@ class TeamWinRateCalculator {
             return playerAnchor && !isProcessed;
         }
 
-        const observer = new MutationObserver((mutationsList) => {
-            for (const mutation of mutationsList) {
-                let found = false
-                if (mutation.type === 'childList') {
-                    for (const node of mutation.addedNodes) {
-                        if (found) break
-                        if (node.nodeType === Node.ELEMENT_NODE) {
-                            if (node.matches('[class*="UserCard__Container"]') || node.querySelector('[class*="UserCard__Container"]')) {
-                                const targetNode = node.matches('[class*="UserCard__Container"]') ? node : node.querySelector('[class*="UserCard__Container"]');
-                                if (isUniqueNode(targetNode)) {
-                                    matchRoomModule.processedNode(targetNode);
-                                    callback(targetNode);
-                                    found = true
-                                    break;
-                                }
-                            }
-                        }
+        matchRoomModule.observe(function search(node) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.matches('[class*="UserCard__Container"]') || node.querySelector('[class*="UserCard__Container"]')) {
+                    const targetNode = node.matches('[class*="UserCard__Container"]') ? node : node.querySelector('[class*="UserCard__Container"]');
+                    if (isUniqueNode(targetNode)) {
+                        matchRoomModule.processedNode(targetNode);
+                        callback(targetNode);
                     }
                 }
-                if (found) break
             }
-        });
-
-        observer.observe(document.body, {
-            childList: true,
-            attributes: true,
-            subtree: true,
-        });
-
-        matchRoomModule.registerObserver(playerId, observer);
+        })
     }
 
 
@@ -189,8 +167,8 @@ class TeamWinRateCalculator {
             mapData.totalGames += 1;
         });
 
-        await this.findUserCard(playerId, async userCardElement => {
-            const existingTable = userCardElement.querySelector('.fc-score-table');
+        await this.findUserCard(playerId, userCardElement => {
+            const existingTable = document.getElementById(`player-table-${playerId}`)
             if (!existingTable) {
                 this.insertHtmlToPlayerCard('src/visual/tables/player.html', playerId, userCardElement);
 
@@ -204,14 +182,14 @@ class TeamWinRateCalculator {
 
 
     async displayWinRates(matchDetails) {
-        const team1 = matchDetails.teams.faction1;
-        const team2 = matchDetails.teams.faction2;
+        const team1 = matchDetails["teams"]["faction1"];
+        const team2 = matchDetails["teams"]["faction2"];
 
-        const team1Promises = team1.roster.map(player =>
-            this.calculateStats(`${team1.name}$roster1`, player.player_id)
+        const team1Promises = team1["roster"].map(player =>
+            this.calculateStats(`${team1.name}$roster1`, player["player_id"])
         );
-        const team2Promises = team2.roster.map(player =>
-            this.calculateStats(`${team2.name}$roster2`, player.player_id)
+        const team2Promises = team2["roster"].map(player =>
+            this.calculateStats(`${team2.name}$roster2`, player["player_id"])
         );
 
         await Promise.all([...team1Promises, ...team2Promises]);
@@ -219,51 +197,24 @@ class TeamWinRateCalculator {
         const element = document.querySelector(`[name="info"][class*="Overview__Column"]`);
         if (element) await handleInfoNode(this, element);
 
-        if (matchRoomModule.isObserverRegistered("info-table")) return
-        const observer = new MutationObserver(async (mutationsList) => {
-            let found = !!document.getElementById("team-table")
-            for (const mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                    for (const addedNode of mutation.addedNodes) {
-                        if (addedNode.nodeType !== Node.ELEMENT_NODE) continue;
-                        if (!await handleInfoNode(this, addedNode)) continue;
-                        found = true;
-                        break;
-                    }
-                }
-                if (mutation.type === 'attributes') {
-                    if (found) break
-                    const targetNode = mutation.target;
-                    if (!await handleInfoNode(this, targetNode)) continue;
-                    break;
-                }
-                if (found) break
-            }
-        });
-        observer.observe(document.body, {attributes: true, childList: true, subtree: true});
-        matchRoomModule.registerObserver("info-table", observer);
+        let found = !!document.getElementById("team-table")
+
+        matchRoomModule.observe(async (node) => {
+            if (found) return
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+            if (!await handleInfoNode(this, node)) return;
+            found = true;
+        })
     }
 }
 
 async function handleInfoNode(calculator, node) {
-    if (!node.matches('[name="info"]') && !node.querySelector('[name="info"][class*="Overview__Column"]')) return false;
     const targetNode = node.matches('[name="info"]') ? node : node.querySelector('[name="info"][class*="Overview__Column"]');
+    if (!targetNode) return false;
     if (targetNode.hasAttribute('data-processed')) return false;
-
     matchRoomModule.processedNode(targetNode);
     await calculator.printResults(targetNode);
     return true
-}
-
-function extractMatchId() {
-    const match = window.location.href.match(/room\/([a-z0-9-]+)/i);
-    return match ? match[1] : null;
-}
-
-function extractLanguage() {
-    const url = window.location.href;
-    const match = url.match(/https:\/\/www\.faceit\.com\/([^/]+)\//);
-    return match ? match[1] : null;
 }
 
 function addTableTeamTitle(roster, title) {

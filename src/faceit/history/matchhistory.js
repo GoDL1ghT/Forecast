@@ -146,43 +146,23 @@ function doAfterTableNodeAppear(callback) {
         return !node.hasAttribute('data-processed') && node.querySelector(`tbody`);
     }
 
-    const observer = new MutationObserver((mutationsList) => {
-        if (matchDatas.length >= 30) {
-            matchHistoryModule.registeredObservers.delete("stats-table-node-observer")
-            observer.disconnect()
-            return
-        }
-        let found = !!document.getElementById("match-history-table")
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    if (found) break
-                    if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.matches('[class*="styles__MatchHistoryTable-"]') || node.querySelector('[class*="styles__MatchHistoryTable-"]')) {
-                            const targetNode = node.matches('[class*="styles__MatchHistoryTable-"]') ? node : node.querySelector('[class*="styles__MatchHistoryTable-"]');
-                            if (isUniqueNode(targetNode)) {
-                                targetNode.id = "match-history-table"
-                                matchHistoryModule.processedNode(targetNode);
-                                matchHistoryModule.removalNode(targetNode);
-                                callback(targetNode);
-                                found = true
-                                break;
-                            }
-                        }
-                    }
+    let found = !!document.getElementById("match-history-table")
+    matchHistoryModule.observe(function search(node) {
+        if (matchDatas.length >= 30) return;
+        if (found) return
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches('[class*="styles__MatchHistoryTable-"]') || node.querySelector('[class*="styles__MatchHistoryTable-"]')) {
+                const targetNode = node.matches('[class*="styles__MatchHistoryTable-"]') ? node : node.querySelector('[class*="styles__MatchHistoryTable-"]');
+                if (isUniqueNode(targetNode)) {
+                    targetNode.id = "match-history-table"
+                    matchHistoryModule.processedNode(targetNode);
+                    matchHistoryModule.removalNode(targetNode);
+                    callback(targetNode);
+                    found = true
                 }
             }
-            if (found) break
         }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true,
-    });
-
-    matchHistoryModule.registerObserver("stats-table-node-observer", observer);
+    })
 }
 
 moduleListener(matchHistoryModule);

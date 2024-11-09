@@ -77,7 +77,8 @@ async function insertAllStatisticToNewTable() {
     let playerStatistic = await getPlayerStatsByNickName(playerNickName);
     let gameStats = playerStatistic["games"][gameType];
     let elo = parseInt(gameStats["faceit_elo"], 10);
-    let [currentLevel, progressBarPercentage] = getBarProgress(elo, gameType);
+    let currentLevel = getLevel(elo, gameType);
+    let progressBarPercentage = getBarProgress(elo, gameType);
 
     insertAllLevelsToTable(currentLevel)
 
@@ -109,29 +110,30 @@ async function insertAllStatisticToNewTable() {
     }
 }
 
-function getBarProgress(elo, gameType) {
-    let currentLevel = -1;
-    let currentRange = {};
-    let levelRanges = gameLevelRanges[gameType]
-
+function getLevel(elo, gameType) {
+    const levelRanges = gameLevelRanges[gameType];
     for (let i = 0; i < levelRanges.length; i++) {
         if (elo >= levelRanges[i].min && elo <= levelRanges[i].max) {
-            currentLevel = i + 1;
-            currentRange = levelRanges[i];
-            break;
+            return i + 1;
         }
     }
+    return -1;
+}
 
-    let nextLevel = currentLevel < levelRanges.length ? levelRanges[currentLevel] : null;
-    let progressPercentage;
+function getBarProgress(elo, gameType) {
+    const levelRanges = gameLevelRanges[gameType];
+    const currentLevel = getLevel(elo, gameType);
+
+    if (currentLevel === -1) return 0;
+
+    const currentRange = levelRanges[currentLevel - 1];
+    const nextLevel = currentLevel < levelRanges.length ? levelRanges[currentLevel] : null;
+
     if (nextLevel) {
-        const currentMin = currentRange.min;
-        const currentMax = currentRange.max;
-        progressPercentage = (elo - currentMin) / (currentMax - currentMin) * 100;
+        return ((elo - currentRange.min) / (currentRange.max - currentRange.min)) * 100;
     } else {
-        progressPercentage = 100;
+        return 100;
     }
-    return [currentLevel, progressPercentage];
 }
 
 
@@ -146,70 +148,57 @@ function doAfterStatisticNodeAppear(callback) {
         null
     ).singleNodeValue?.parentElement.parentElement
     if (element) callback(element)
-    const observer = new MutationObserver(mutationsList => {
-        let found = !!document.getElementById("forecast-statistic-table")
-        let removed = !!document.getElementById("hided-enchancer-table")
 
-        function removeRepeekNodeIfExist(node) {
-            if (removed) return;
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                let parent = node?.parentElement?.parentElement
-                if (node.innerText === "LEVEL PROGRESS" && !parent.getAttribute("hided") && parent.id !== "forecast-statistic-table") {
-                    hideNode(parent)
-                    parent.id = "hided-enchancer-table"
-                    removed = true
-                    return;
-                }
-                node.childNodes.forEach(removeRepeekNodeIfExist);
+    let element1 = document.evaluate(
+        "//*[@player-statistic-container]",
+        document,
+        null,
+        XPathResult.FIRST_ORDERED_NODE_TYPE,
+        null
+    ).singleNodeValue;
+    if (element1) callbackTable(element1)
+    let found = !!document.getElementById("forecast-statistic-table")
+    let removed = !!document.getElementById("hided-enchancer-table")
+
+    rankingModule.observe(function search(node) {
+        if (found) return;
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            let baseElement = document.querySelector('[class*=styles__ContentLayoutGrid]')
+            if (baseElement) {
+                baseElement.setAttribute("player-statistic-container","")
+                callbackTable(baseElement)
+                found = true;
+                return;
             }
+            node.childNodes.forEach(search);
         }
+    })
 
-        function checkNodeAndChildren(node) {
-            if (found) return;
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                let targetNode = document.getElementById("content-grid-element-3")
-                if (targetNode) {
-                    let newNode = document.createElement("div")
-                    rankingModule.doAfter(() => targetNode.querySelector('[class*="styles__StatsSection"]'), () => {
-                        if (!!document.getElementById("forecast-statistic-table")) return
-                        targetNode.children[0].insertAdjacentElement("afterend", newNode)
-                        callback(newNode);
-                    })
-                    found = true;
-                    return;
-                }
-                node.childNodes.forEach(checkNodeAndChildren);
+    rankingModule.observe(function searchForRemove(node) {
+        if (removed) return;
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            let parent = node?.parentElement?.parentElement
+            if (node.innerText === "LEVEL PROGRESS" && !parent.getAttribute("hided") && parent.id !== "forecast-statistic-table") {
+                hideNode(parent)
+                parent.id = "hided-enchancer-table"
+                removed = true
+                return;
             }
+            node.childNodes.forEach(searchForRemove);
         }
+    })
 
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    if (found) break;
-                    checkNodeAndChildren(node);
-                }
-            }
-            if (found) break;
-        }
-
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    if (removed) break;
-                    removeRepeekNodeIfExist(node);
-                }
-            }
-            if (removed) break;
-        }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        attributes: true,
-        subtree: true
-    });
-
-    rankingModule.registerObserver("stats-node-observer", observer);
+    function callbackTable(baseElement) {
+        let newNode = document.createElement("div")
+        rankingModule.doAfter(() => baseElement.children.length === 3, () => {
+            let targetNode = baseElement.children[2]
+            rankingModule.doAfter(() => targetNode.querySelector('[class*="styles__StatsSection"]'), () => {
+                if (!!document.getElementById("forecast-statistic-table")) return
+                targetNode.children[0].insertAdjacentElement("afterend", newNode)
+                callback(newNode);
+            })
+        })
+    }
 }
 
 moduleListener(rankingModule);

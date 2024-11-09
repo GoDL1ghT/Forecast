@@ -6,25 +6,30 @@
         align-items: center;
         margin: 0 16px;
     }
+
     .skill-icon {
         width: 32px;
         height: 32px;
         display: inline-block;
     }
+
     .details {
         margin-left: 4px;
     }
+
     .flex-between {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
     }
+
     .elo {
         display: flex;
         align-items: center;
         justify-content: flex-end;
         gap: 4px;
     }
+
     .progress-container {
         margin-top: 1px;
         margin-bottom: 1px;
@@ -32,11 +37,13 @@
         width: 120px;
         background: rgb(75, 78, 78);
     }
+
     .progress {
         height: 100%;
-        width: 88.3534%;
+        width: 0;
         background: rgb(255, 85, 0);
     }
+
     .progress-info {
         display: flex;
         justify-content: space-between;
@@ -47,14 +54,15 @@
 <a href="" id="user-url">
     <div class="player-stats" id="statistic-progress-bar">
         <div id="skill-current-level">
-            <span title="Skill Level 9" class="skill-icon"></span>
         </div>
         <div class="details">
             <div class="flex-between">
                 <div class="elo" id="progress-current-elo">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" color="secondary" viewBox="0 0 24 12">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" color="secondary"
+                         viewBox="0 0 24 12">
                         <title>Elo Icon</title>
-                        <path fill="rgba(255,255,255,0.6)" d="M12 3c0 .463-.105.902-.292 1.293l1.998 2A2.97 2.97 0 0 1 15 6a2.99 2.99 0 0 1 1.454.375l1.921-1.921a3 3 0 1 1 1.5 1.328l-2.093 2.093a3 3 0 1 1-5.49-.168l-1.999-2a2.992 2.992 0 0 1-2.418.074L5.782 7.876a3 3 0 1 1-1.328-1.5l1.921-1.921A3 3 0 1 1 12 3z"></path>
+                        <path fill="rgba(255,255,255,0.6)"
+                              d="M12 3c0 .463-.105.902-.292 1.293l1.998 2A2.97 2.97 0 0 1 15 6a2.99 2.99 0 0 1 1.454.375l1.921-1.921a3 3 0 1 1 1.5 1.328l-2.093 2.093a3 3 0 1 1-5.49-.168l-1.999-2a2.992 2.992 0 0 1-2.418.074L5.782 7.876a3 3 0 1 1-1.328-1.5l1.921-1.921A3 3 0 1 1 12 3z"></path>
                     </svg>
                     <elo></elo>
                 </div>
@@ -65,9 +73,9 @@
                     <div class="progress" id="elo-progress-bar"></div>
                 </div>
                 <div class="progress-info">
-                    <span id="min-elo-level">1751</span>
-                    <span id="elo-to-de-or-up-grade">-221/+30</span>
-                    <span id="max-elo-level">2000</span>
+                    <span id="min-elo-level"></span>
+                    <span id="elo-to-de-or-up-grade"></span>
+                    <span id="max-elo-level"></span>
                 </div>
             </div>
         </div>
