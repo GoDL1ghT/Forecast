@@ -12,12 +12,12 @@ This project is a browser extension that retrieves and displays statistics for F
 
 ## Usage
 
-### Method 1: Manual Installation
+### Method 1. (RECOMMENDED)
 
 1. Just install from [Chrome Webstore](https://chromewebstore.google.com/detail/faceit-forecast/mpkkcddegpblmobincjkbpgfcbejjbcp)
 2. Open the Faceit website and navigate to the matchroom page.
 
-### Method 2: Batch Script Installation
+### Method 2: Batch Script Installation (MANUALLY, For Advanced Users)
 
 1. [Download the `.bat` file](https://github.com/GoDL1ghT/Forecast/blob/master/update.bat).
 2. Create a new folder on your computer and place the `.bat` file in this folder.
