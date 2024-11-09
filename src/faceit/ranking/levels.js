@@ -375,7 +375,6 @@ function doAfterSearchPlayerNodeAppear(callback) {
 }
 
 function doAfterStatisticBarNodeAppear(nick, callback) {
-    if (document.getElementById("statistic-progress-bar")) return
     const targetHrefPattern = new RegExp(`^/${extractLanguage()}/players/${nick}/stats/`);
 
     let found = !!document.getElementById("statistic-progress-bar");

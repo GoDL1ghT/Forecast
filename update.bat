@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set BASE_URL=https://raw.githubusercontent.com/GoDL1ghT/Forecast/master
+set BASE_URL=https://raw.githubusercontent.com/TerraMiner/Forecast/master
 set DEST_DIR=%cd%
 
 if exist "src" rmdir /s /q "src"
@@ -49,6 +49,6 @@ curl -L -o src\visual\styles.css %BASE_URL%/src/visual/styles.css
 curl -L -o _locales\en\messages.json %BASE_URL%/_locales/en/messages.json
 curl -L -o manifest.json %BASE_URL%/manifest.json
 
-echo Load completed.
+echo Update completed.
 
 endlocal
