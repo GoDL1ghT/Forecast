@@ -90,7 +90,6 @@ const newLevelsModule = new Module("levels", async () => {
         })
     })
 
-
     doAfterWidgetEloNodeAppear(async (node) => {
         let nodeToRemove = node.parentNode.parentNode
         nodeToRemove.parentNode.id = "edited-widget"
@@ -99,10 +98,16 @@ const newLevelsModule = new Module("levels", async () => {
 
     const defineUrlType = (url) => {
         switch (true) {
+            case /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/stats\/([^\/]+)$/.test(url):
+                return "stats";
+            case /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)\/collections.*/.test(url):
+                return "collections";
             case /^https:\/\/www\.faceit\.com\/[^\/]+\/players\/([^\/]+)(\/.*)?$/.test(url):
                 return "profile";
             case /^https:\/\/www\.faceit\.com\/\w+\/cs2\/room\/[\w\-]+(\/.*)?$/.test(url):
                 return "matchroom";
+            default:
+                return null;
         }
     };
 
@@ -113,7 +118,7 @@ const newLevelsModule = new Module("levels", async () => {
         doAfterNickNameNodeAppear(async (nickNode) => {
             handleMatchRoomLobby(nickNode, matchData)
         })
-    } else {
+    } else if (lobbyType === "profile") {
         doAfterMainLevelAppear(async (node) => {
             let nick = extractPlayerNick()
             let playerStatistic = await getPlayerStatsByNickName(nick);
@@ -124,7 +129,7 @@ const newLevelsModule = new Module("levels", async () => {
             if (!gameStats) return
             let elo = parseInt(gameStats["faceit_elo"], 10);
             let currentLevel = getLevel(elo, gameType);
-            let icon = levelIcons.get(currentLevel).cloneNode(true).cloneNode(true).childNodes[0]
+            let icon = levelIcons.get(currentLevel).cloneNode(true).firstChild
             icon.id = "new-elo-level-icon"
             newLevelsModule.removalNode(icon);
             if (isTopIcon) {
@@ -136,6 +141,56 @@ const newLevelsModule = new Module("levels", async () => {
                     icon.appendToAndHide(oldIcon)
                 })
             }
+        })
+    } else {
+        doAfterMasterLevelNodeAppear(async (node) => {
+            let nick = extractPlayerNick()
+            let playerStatistic = await getPlayerStatsByNickName(nick);
+            let {gameStats, gameType} = getStatistic(playerStatistic)
+            if (!gameStats) return
+            if (document.getElementById("new-elo-level-icon")) return
+            if (!gameStats) return
+            let elo = parseInt(gameStats["faceit_elo"], 10);
+            let levelRanges = gameLevelRanges[gameType];
+            let currentLevel = getLevel(elo, gameType);
+            let progress = getBarProgress(elo, gameType)
+            let icon = levelIcons.get(currentLevel).cloneNode(true).firstChild
+            icon.id = "new-elo-level-icon"
+            newLevelsModule.removalNode(icon);
+            if (document.getElementById("new-elo-level-icon")) return
+            if (lobbyType === "stats") {
+                icon.style.width = '48px';
+                icon.style.height = '48px';
+            }
+            let isTopIcon = node.getElementsByTagName("i").length > 0
+            if (isTopIcon) {
+                if (lobbyType === "stats") {
+                    icon.style.width = '38px';
+                    icon.style.height = '38px';
+                }
+                node.parentElement.prepend(icon)
+                node.parentElement.style.flexDirection = "column";
+            } else {
+                icon.appendToAndHide(node)
+            }
+            doAfterMasterProgressBarAppear(async (node) => {
+                let section = node.parentElement.parentElement.parentElement
+
+                let newTable = getHtmlResource("src/visual/tables/elo-progress-bar-master.html").cloneNode(true)
+                newTable.appendToAndHide(section)
+
+                let {min: currmin} = levelRanges[currentLevel - 1]
+                let {min: nextmin} = currentLevel === levelRanges.length ? {min: '∞'} : levelRanges[currentLevel]
+
+                document.getElementById("master-progress-bar").style.width = `${progress}%`;
+                let prevLevelIcon = levelIcons.get(currentLevel-1)?.cloneNode(true)?.firstChild
+                let nextLevelIcon = levelIcons.get(currentLevel+1)?.cloneNode(true)?.firstChild
+                if (prevLevelIcon) prevLevelIcon.appendToAndHide(document.getElementById("master-min-icon"))
+                if (nextLevelIcon) nextLevelIcon.appendToAndHide(document.getElementById("master-max-icon"))
+
+                document.getElementById("master-min-value").textContent = currmin
+                document.getElementById("master-max-value").textContent = nextmin
+            })
         })
     }
 
@@ -201,7 +256,7 @@ const newLevelsModule = new Module("levels", async () => {
                 if (!gameStats) return
                 let elo = parseInt(gameStats["faceit_elo"], 10);
                 let currentLevel = getLevel(elo, gameType);
-                let icon = levelIcons.get(currentLevel).cloneNode(true).childNodes[0]
+                let icon = levelIcons.get(currentLevel).cloneNode(true).firstChild
                 icon.appendToAndHide(oldIcon)
             })
         })
@@ -237,7 +292,7 @@ function handleMatchRoomLobby(nickNode, matchData) {
         let section = playerCardNodes[playerCardNodes.length - 1].firstChild.childNodes
         newLevelsModule.doAfter(() => section.length === 3, () => {
             let currentLevel = getLevel(elo, "cs2");
-            let newIcon = levelIcons.get(currentLevel).cloneNode(true).childNodes[0]
+            let newIcon = levelIcons.get(currentLevel).cloneNode(true).firstChild
             let oldIcon = section[playerCardNodes.length - 1];
             if (typeof oldIcon.className === "string" && oldIcon.className.includes("BadgeHolder__Holder")) {
                 newIcon.appendTo(oldIcon)
@@ -256,7 +311,7 @@ async function insertStatsToEloBar(nick) {
     document.getElementById("user-url").setAttribute("href", `/${extractLanguage()}/players/${nick}/stats/${gameType}`)
 
     let elo = parseInt(gameStats["faceit_elo"], 10);
-    let currentLevel = getLevel(elo,gameType)
+    let currentLevel = getLevel(elo, gameType)
     let progressBarPercentage = getBarProgress(elo, gameType);
     let node = document.getElementById("skill-current-level")
     node.innerHTML = levelIcons.get(currentLevel).innerHTML
@@ -324,19 +379,14 @@ function doAfterStatisticBarNodeAppear(nick, callback) {
     const targetHrefPattern = new RegExp(`^/${extractLanguage()}/players/${nick}/stats/`);
 
     let found = !!document.getElementById("statistic-progress-bar");
-    let removed = !!document.getElementById("hided-elo-bar");
 
     newLevelsModule.observe(function searchForRemove(node) {
-        if (removed) return;
-
         if (node.nodeType === Node.ELEMENT_NODE) {
             const href = node.getAttribute('href');
             const hasSvg = node.querySelector('svg');
             let targetNode = node.parentElement
             if (href && targetHrefPattern.test(href) && hasSvg && targetNode.id !== "user-url") {
                 hideNode(targetNode)
-                targetNode.id = "hided-elo-bar"
-                removed = true;
                 return;
             }
             node.childNodes.forEach(searchForRemove);
@@ -414,6 +464,44 @@ function doAfterMainLevelAppear(callback) {
                 childList: true,
                 subtree: true
             });
+        }
+        node.childNodes.forEach(search);
+    })
+}
+
+function doAfterMasterLevelNodeAppear(callback) {
+    let mainLevelNode = document.querySelector('[class*="SkillIcon__StyledSvg"]');
+    if (!mainLevelNode) mainLevelNode = document.querySelector('[class*="BadgeHolder__Holder"]');
+    if (mainLevelNode) {
+        callback(mainLevelNode)
+        return
+    }
+
+    newLevelsModule.observe(function search(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches('[class*="SkillIcon__StyledSvg"]') || node.matches('[class*="BadgeHolder__Holder"]')) {
+                callback(node);
+                return;
+            }
+            node.childNodes.forEach(search);
+        }
+    })
+}
+
+function doAfterMasterProgressBarAppear(callback) {
+    let mainProgressbar = document.querySelector('[class*="ProgressBar__ProgressHolder"]');
+    if (mainProgressbar) {
+        callback(mainProgressbar)
+        return
+    }
+
+    let found = false;
+    newLevelsModule.observe(function search(node) {
+        if (found) return;
+        if (node.nodeType === Node.ELEMENT_NODE && node.matches('[class*="ProgressBar__ProgressHolder"]')) {
+            found = true;
+            callback(node);
+            return;
         }
         node.childNodes.forEach(search);
     })

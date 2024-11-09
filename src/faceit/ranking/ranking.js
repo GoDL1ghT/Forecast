@@ -49,7 +49,7 @@ function insertAllLevelsToTable(currentLevel) {
     levelIcons.forEach((icon, level) => {
         const node = document.getElementById(`level-node-${level}`);
         const span = node.getElementsByTagName("span")[0];
-        icon.appendToAndHide(span)
+        icon.cloneNode(true).appendToAndHide(span)
         if (level === currentLevel) {
             let svgNode = icon.cloneNode(true)
             let svgSpan = svgNode.getElementsByTagName("span")[0];

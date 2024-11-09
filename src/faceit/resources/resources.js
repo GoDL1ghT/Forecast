@@ -19,6 +19,7 @@ async function loadAllHTMLs() {
         "src/visual/tables/player.html",
         "src/visual/tables/matchscore.html",
         "src/visual/tables/elo-progress-bar.html",
+        "src/visual/tables/elo-progress-bar-master.html",
         ...Array.from({length: 20}, (_, i) => `src/visual/tables/levels/level${i + 1}.html`)
     ];
 

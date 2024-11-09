@@ -44,7 +44,9 @@ class Module {
 
     #releaseCaches() {
         this.observerTasks.length = 0
-        this.observer.disconnect()
+        if (this.observer) {
+            this.observer.disconnect()
+        }
 
         this.processedNodes.forEach((node) => {
             node.removeAttribute('data-processed')
