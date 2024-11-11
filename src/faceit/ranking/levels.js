@@ -1,11 +1,12 @@
 class PartySlot {
     nick = null
 
-    constructor(slotNode) {
+    constructor(slotNode, id) {
         this.slotNode = slotNode
         this.newIcon = null
         this.isEmpty = true
         this.isShort = null
+        this.id = id
     }
 
     isShortStyle() {
@@ -47,6 +48,16 @@ class PartySlot {
         return nickNode && nickNode.isConnected && !isUpdated
     }
 
+    removeOldIcon() {
+        let levelNode = this.getLevelNode(this.isShort);
+        if (!levelNode) return
+        let icon = levelNode.querySelector('[class*="SkillIcon__StyledSvg"]')
+        if (!icon) return;
+        if (icon.style.display !== "none") {
+            icon.style.display = "none"
+        }
+    }
+
     async updateIcon() {
         let newNick = this.getNickNode(this.isShort)?.innerText
         if (!newNick) return
@@ -70,7 +81,13 @@ class PartySlot {
             if (!oldIcon) return;
             let currentLevel = getLevel(elo, "cs2");
             let newIcon = levelIcons.get(currentLevel).cloneNode(true).firstChild
-            if (this.newIcon) this.newIcon.remove()
+            newIcon.id = `party-slot-icon-${this.id}`
+            if (this.newIcon) {
+                this.newIcon.remove()
+                this.newIcon = null
+                this.isEmpty = true
+            }
+            if (document.getElementById(`party-slot-icon-${this.id}`)) return
             newIcon.appendToAndHide(oldIcon)
             newLevelsModule.removalNode(newIcon)
             this.newIcon = newIcon
@@ -136,13 +153,11 @@ const newLevelsModule = new Module("levels", async () => {
             newLevelsModule.removalNode(icon);
             if (isTopIcon) {
                 node.appendChild(icon)
-                newLevelsModule.removalNode(node)
             } else {
                 newLevelsModule.doAfter(() => !!node.getElementsByTagName("svg")[0], () => {
                     if (document.getElementById("new-elo-level-icon")) return
                     let oldIcon = node.getElementsByTagName("svg")[0]
                     icon.appendToAndHide(oldIcon)
-                    newLevelsModule.removalNode(icon)
                 })
             }
         })
@@ -188,8 +203,8 @@ const newLevelsModule = new Module("levels", async () => {
                 let {min: nextmin} = currentLevel === levelRanges.length ? {min: '∞'} : levelRanges[currentLevel]
 
                 document.getElementById("master-progress-bar").style.width = `${progress}%`;
-                let prevLevelIcon = levelIcons.get(currentLevel-1)?.cloneNode(true)?.firstChild
-                let nextLevelIcon = levelIcons.get(currentLevel+1)?.cloneNode(true)?.firstChild
+                let prevLevelIcon = levelIcons.get(currentLevel - 1)?.cloneNode(true)?.firstChild
+                let nextLevelIcon = levelIcons.get(currentLevel + 1)?.cloneNode(true)?.firstChild
                 if (prevLevelIcon) prevLevelIcon.appendToAndHide(document.getElementById("master-min-icon"))
                 if (nextLevelIcon) nextLevelIcon.appendToAndHide(document.getElementById("master-max-icon"))
 
@@ -213,7 +228,7 @@ const newLevelsModule = new Module("levels", async () => {
                     Array.from(table.children).forEach((slot) => {
                         if (slot.id !== `party-slot-${i}`) {
                             slot.id = `party-slot-${i}`
-                            partySlots.set(`party-slot-${i}`, new PartySlot(slot))
+                            partySlots.set(`party-slot-${i}`, new PartySlot(slot, i))
                         }
                         i++
                     })
@@ -222,6 +237,7 @@ const newLevelsModule = new Module("levels", async () => {
                 for (let j = 0; j < partySlots.size; j++) {
                     let id = `party-slot-${j}`
                     let slot = partySlots.get(id)
+                    slot.removeOldIcon()
                     if (!slot.isNeedRemove() && !slot.isEmpty) {
                         partySlots.delete(id)
                         slot.slotNode.id = ""
@@ -297,11 +313,11 @@ function handleMatchRoomLobby(nickNode, matchData) {
     let playerData = findPlayerInTeamByNickname(matchData["teams"], nickname)
     let elo = parseInt(playerData["elo"], 10)
     newLevelsModule.doAfter(() => playerCardNodes.length === 3, () => {
-        let section = playerCardNodes[playerCardNodes.length - 1].firstChild.childNodes
-        newLevelsModule.doAfter(() => section.length === 3, () => {
+        let section = playerCardNodes[playerCardNodes.length - 1].firstChild
+        newLevelsModule.doAfter(() => section.querySelector("[class*=SkillIcon__StyledSvg]") || section.querySelector("[class*=BadgeHolder__Holder]"), () => {
             let currentLevel = getLevel(elo, "cs2");
             let newIcon = levelIcons.get(currentLevel).cloneNode(true).firstChild
-            let oldIcon = section[playerCardNodes.length - 1];
+            let oldIcon = section.querySelector("[class*=SkillIcon__StyledSvg]") || section.querySelector("[class*=BadgeHolder__Holder]");
             if (typeof oldIcon.className === "string" && oldIcon.className.includes("BadgeHolder__Holder")) {
                 newIcon.appendTo(oldIcon)
             } else {
@@ -344,7 +360,7 @@ async function insertStatsToEloBar(nick) {
 }
 
 function doAfterMatchroomLobbyAppear(callback) {
-    let existLobby = document.getElementById("marked-party-lobby")
+    let existLobby = document.getElementById("marked-party-lobby") || document.querySelector('[class*=Matchmaking__PlayHolder]');
     if (existLobby) callback(existLobby)
     newLevelsModule.observe(function search(node) {
         if (node.nodeType === Node.ELEMENT_NODE) {
@@ -503,7 +519,7 @@ function doAfterMasterProgressBarAppear(callback) {
         return
     }
 
-    let found = false;
+    let found = !!document.getElementById("master-progress-bar-container");
     newLevelsModule.observe(function search(node) {
         if (found) return;
         if (node.nodeType === Node.ELEMENT_NODE && node.matches('[class*="ProgressBar__ProgressHolder"]')) {

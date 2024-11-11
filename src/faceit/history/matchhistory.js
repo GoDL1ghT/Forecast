@@ -40,12 +40,13 @@ class MatchNodeByMatchStats {
 }
 
 function insertStatsIntoNode(root, score, raiting, kd, kdkr, adr) {
-    let myNewNode = getHtmlResource("src/visual/tables/matchscore.html").cloneNode(true)
+    let table = getHtmlResource("src/visual/tables/matchscore.html").cloneNode(true)
     let fourthNode = root?.children[3];
     if (fourthNode && fourthNode.children.length === 1) {
         let singleChild = fourthNode.children[0];
-        myNewNode.appendToAndHide(singleChild)
-        insertRow(myNewNode, score, raiting, kd, kdkr, adr)
+        table.appendToAndHide(singleChild)
+        matchHistoryModule.removalNode(table);
+        insertRow(table, score, raiting, kd, kdkr, adr)
     }
 }
 
@@ -138,7 +139,6 @@ function doAfterTableNodeAppear(callback) {
     if (matchHistoryNode) {
         matchHistoryNode.id = "match-history-table"
         matchHistoryModule.processedNode(matchHistoryNode);
-        matchHistoryModule.removalNode(matchHistoryNode);
         callback(matchHistoryNode)
     }
 
@@ -156,7 +156,6 @@ function doAfterTableNodeAppear(callback) {
                 if (isUniqueNode(targetNode)) {
                     targetNode.id = "match-history-table"
                     matchHistoryModule.processedNode(targetNode);
-                    matchHistoryModule.removalNode(targetNode);
                     callback(targetNode);
                     found = true
                 }
