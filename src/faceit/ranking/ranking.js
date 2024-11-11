@@ -67,6 +67,7 @@ const rankingModule = new Module("ranking", async () => {
     doAfterStatisticNodeAppear(async (node) => {
         let newNode = getHtmlResource("src/visual/tables/level-progress-table.html").cloneNode(true)
         newNode.appendToAndHide(node)
+        newLevelsModule.removalNode(newNode)
         await insertAllStatisticToNewTable();
     })
 })

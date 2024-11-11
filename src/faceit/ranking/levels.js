@@ -72,6 +72,7 @@ class PartySlot {
             let newIcon = levelIcons.get(currentLevel).cloneNode(true).firstChild
             if (this.newIcon) this.newIcon.remove()
             newIcon.appendToAndHide(oldIcon)
+            newLevelsModule.removalNode(newIcon)
             this.newIcon = newIcon
             this.nick = newNick
         }
@@ -86,6 +87,7 @@ const newLevelsModule = new Module("levels", async () => {
         doAfterStatisticBarNodeAppear(nick, async (node) => {
             let newTable = getHtmlResource("src/visual/tables/elo-progress-bar.html").cloneNode(true)
             newTable.appendToAndHide(node)
+            newLevelsModule.removalNode(newTable)
             await insertStatsToEloBar(nick)
         })
     })
@@ -134,11 +136,13 @@ const newLevelsModule = new Module("levels", async () => {
             newLevelsModule.removalNode(icon);
             if (isTopIcon) {
                 node.appendChild(icon)
+                newLevelsModule.removalNode(node)
             } else {
                 newLevelsModule.doAfter(() => !!node.getElementsByTagName("svg")[0], () => {
                     if (document.getElementById("new-elo-level-icon")) return
                     let oldIcon = node.getElementsByTagName("svg")[0]
                     icon.appendToAndHide(oldIcon)
+                    newLevelsModule.removalNode(icon)
                 })
             }
         })
@@ -178,6 +182,7 @@ const newLevelsModule = new Module("levels", async () => {
 
                 let newTable = getHtmlResource("src/visual/tables/elo-progress-bar-master.html").cloneNode(true)
                 newTable.appendToAndHide(section)
+                newLevelsModule.removalNode(newTable)
 
                 let {min: currmin} = levelRanges[currentLevel - 1]
                 let {min: nextmin} = currentLevel === levelRanges.length ? {min: '∞'} : levelRanges[currentLevel]
@@ -237,7 +242,9 @@ const newLevelsModule = new Module("levels", async () => {
             let oldIcon = innerNode.childNodes[0]
             let currentLevel = getLevel(elo, "cs2");
             let newIcon = levelIcons.get(currentLevel).cloneNode(true)
-            newIcon.firstElementChild.appendToAndHide(oldIcon)
+            let innerNewIcon = newIcon.firstElementChild;
+            innerNewIcon.appendToAndHide(oldIcon)
+            newLevelsModule.removalNode(innerNewIcon)
         })
     })
 
@@ -258,6 +265,7 @@ const newLevelsModule = new Module("levels", async () => {
                 let currentLevel = getLevel(elo, gameType);
                 let icon = levelIcons.get(currentLevel).cloneNode(true).firstChild
                 icon.appendToAndHide(oldIcon)
+                newLevelsModule.removalNode(icon)
             })
         })
     })
@@ -299,6 +307,7 @@ function handleMatchRoomLobby(nickNode, matchData) {
             } else {
                 newIcon.appendToAndHide(oldIcon)
             }
+            newLevelsModule.removalNode(newIcon)
         })
     })
 }
