@@ -161,7 +161,7 @@ const newLevelsModule = new Module("levels", async () => {
                 })
             }
         })
-    } else {
+    } else if (lobbyType === "stats") {
         doAfterMasterLevelNodeAppear(async (node) => {
             let nick = extractPlayerNick()
             let playerStatistic = await getPlayerStatsByNickName(nick);

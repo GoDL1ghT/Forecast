@@ -6,6 +6,7 @@ class MatchNodeByMatchStats {
         this.matchStats = null
         this.rounds = 0
         this.score = ""
+        this.isWin = false
     }
 
     async setupStatsToNode() {
@@ -35,22 +36,22 @@ class MatchNodeByMatchStats {
             0.1587
         ).toFixed(2);
 
-        insertStatsIntoNode(this.node, this.score.replace(/\s+/g, ''), rating, `${kills}/${deaths}`, `${kdratio}/${krratio}`, adr)
+        insertStatsIntoNode(this.node, this.score.replace(/\s+/g, ''), rating, kills, deaths, kdratio, krratio, adr, this.isWin)
     }
 }
 
-function insertStatsIntoNode(root, score, raiting, kd, kdkr, adr) {
+function insertStatsIntoNode(root, score, raiting, k, d, kd, kr, adr, isWin) {
     let table = getHtmlResource("src/visual/tables/matchscore.html").cloneNode(true)
     let fourthNode = root?.children[3];
     if (fourthNode && fourthNode.children.length === 1) {
         let singleChild = fourthNode.children[0];
         table.appendToAndHide(singleChild)
         matchHistoryModule.removalNode(table);
-        insertRow(table, score, raiting, kd, kdkr, adr)
+        insertRow(table, score, raiting, k, d, kd, kr, adr, isWin)
     }
 }
 
-function insertRow(node, score, raiting, kd, kdkr, adr) {
+function insertRow(node, score, raiting, k, d, kd, kr, adr, isWin) {
     const table = node.getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
     const scoreCell = newRow.insertCell(0);
@@ -58,11 +59,25 @@ function insertRow(node, score, raiting, kd, kdkr, adr) {
     const kdCell = newRow.insertCell(2);
     const kdkrCell = newRow.insertCell(3);
     const adrCell = newRow.insertCell(4);
+    let green = "rgb(61,255,108)";
+    let red = "rgb(255, 0, 43)";
 
-    scoreCell.innerHTML = score;
-    raitingCell.innerHTML = raiting;
-    kdCell.innerHTML = kd;
-    kdkrCell.innerHTML = kdkr;
+    let scoreNode = document.createElement("div");
+    scoreNode.style.color = isWin ? green : red;
+    scoreNode.innerHTML = score;
+
+    let raitingNode = document.createElement("div");
+    raitingNode.style.color = raiting > 1.0 ? green : red;
+    raitingNode.innerHTML = raiting;
+
+    let killsDeathNode  = document.createElement("div");
+    killsDeathNode.style.color = kd > 1.0 ? green : red;
+    killsDeathNode.innerHTML = `${k}/${d}`;
+
+    scoreCell.appendChild(scoreNode);
+    raitingCell.appendChild(raitingNode);
+    kdCell.appendChild(killsDeathNode)
+    kdkrCell.innerHTML = `${kd}/${kr}`;
     adrCell.innerHTML = adr;
 }
 
@@ -107,11 +122,13 @@ async function fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, player
         if (matchInfo) {
             let matchId = matchInfo.stats["Match Id"];
             let detailedMatchInfo = await fetchMatchStatsDetailed(matchId);
+            console.log(detailedMatchInfo)
             let matchStats = detailedMatchInfo.rounds[0];
-            let detailedPlayerStats = findPlayerInTeamById(matchStats.teams, playerId);
+            let {player: detailedPlayerStats, team: team} = findPlayerInTeamById(matchStats.teams, playerId);
             matchNodeByStats.matchStats = detailedPlayerStats["player_stats"];
             matchNodeByStats.rounds = parseInt(matchStats.round_stats["Rounds"], 10);
             matchNodeByStats.score = matchStats.round_stats["Score"];
+            matchNodeByStats.isWin = team["team_stats"]["Team Win"] === "1";
         }
     });
 
@@ -122,7 +139,7 @@ function findPlayerInTeamById(teams, playerId) {
     for (let team of teams) {
         let player = team.players.find(player => player.player_id === playerId);
         if (player) {
-            return player;
+            return {team: team, player: player};
         }
     }
     return null;
