@@ -122,7 +122,6 @@ async function fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, player
         if (matchInfo) {
             let matchId = matchInfo.stats["Match Id"];
             let detailedMatchInfo = await fetchMatchStatsDetailed(matchId);
-            console.log(detailedMatchInfo)
             let matchStats = detailedMatchInfo.rounds[0];
             let {player: detailedPlayerStats, team: team} = findPlayerInTeamById(matchStats.teams, playerId);
             matchNodeByStats.matchStats = detailedPlayerStats["player_stats"];
