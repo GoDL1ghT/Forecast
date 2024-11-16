@@ -51,6 +51,7 @@
         "src/visual/tables/elo-progress-bar.html",
         "src/visual/tables/elo-progress-bar-master.html",
         "src/visual/tables/player.html",
+        "src/visual/tables/match-counter-arrow.html",
         "src/visual/tables/levels/level1.html",
         "src/visual/tables/levels/level2.html",
         "src/visual/tables/levels/level3.html",

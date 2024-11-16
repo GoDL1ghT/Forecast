@@ -114,7 +114,7 @@ class Module {
         });
     }
 
-    async  doAfterNodeAppear(selector, callback) {
+    async doAfterNodeAppear(selector, callback) {
         let element = document.querySelector(selector);
         if (element) await callback(element)
         this.observe(async () => {

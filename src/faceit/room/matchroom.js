@@ -186,7 +186,7 @@ class TeamWinRateCalculator {
 
         await Promise.all([...team1Promises, ...team2Promises]);
 
-        matchRoomModule.doAfterNodeAppear('[name="info"][class*="Overview__Column"]',async (node) => {
+        await matchRoomModule.doAfterNodeAppear('[name="info"][class*="Overview__Column"]',async (node) => {
             let uniqueCheck = () => node.querySelector('[id*="team-table"]')
             if (uniqueCheck()) return
             const targetNode = node.matches('[name="info"]') ? node : node.querySelector('[name="info"][class*="Overview__Column"]');

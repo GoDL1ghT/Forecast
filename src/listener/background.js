@@ -2,7 +2,6 @@ let moduleStateByTabId = new Map()
 let previousUrlsByTabId = new Map()
 
 const stateUnloaded = "unloaded"
-const stateLoaded = "loaded"
 const stateLoading = "loading"
 
 const faceitUrlRegex = /^https:\/\/www\.faceit\.com\/.*/;

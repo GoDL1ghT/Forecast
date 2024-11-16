@@ -100,7 +100,7 @@ const newLevelsModule = new Module("levels", async () => {
     const enabled = await isExtensionEnabled() && await isSettingEnabled("eloranking");
     if (!enabled) return;
 
-    newLevelsModule.doAfterNodeAppear('#main-header-height-wrapper div[class*="styles__ProfileContainer"]', async (element) => {
+    await newLevelsModule.doAfterNodeAppear('#main-header-height-wrapper div[class*="styles__ProfileContainer"]', async (element) => {
         let uniqueCheck = () => element.parentElement.querySelector('[id*="statistic-progress-bar"]')
         if (!uniqueCheck()) {
             newLevelsModule.doAfter(() => element.querySelector('[class*="styles__NicknameText-"]'), async () => {
@@ -124,11 +124,11 @@ const newLevelsModule = new Module("levels", async () => {
         }
     })
 
-    newLevelsModule.doAfterNodeAppear('[class*="EloWidget__Holder-"]', async (node) => {
-        let nodeToRemove = node.parentNode.parentNode
-        nodeToRemove.parentNode.id = "edited-widget"
-        hideNode(nodeToRemove)
-    })
+    // newLevelsModule.doAfterNodeAppear('[class*="EloWidget__Holder-"]', (node) => {
+    //     let nodeToRemove = node.parentNode.parentNode
+    //     nodeToRemove.parentNode.id = "edited-widget"
+    //     hideNode(nodeToRemove)
+    // })
 
     const defineUrlType = (url) => {
         switch (true) {
@@ -151,7 +151,7 @@ const newLevelsModule = new Module("levels", async () => {
     if (lobbyType === "matchroom") {
         let matchId = extractMatchId()
         let matchData = await fetchOldMatchStats(matchId);
-        newLevelsModule.doAfterAllNodeAppear('[class*="Nickname__Name-"]:not([id*="-lvlicon-"])', async (nickNode) => {
+        await newLevelsModule.doAfterAllNodeAppear('[class*="Nickname__Name-"]:not([id*="-lvlicon-"])', async (nickNode) => {
             let uniqueCheck = () => nickNode.id?.includes("-lvlicon-")
             if (uniqueCheck()) return
             let nickname = nickNode.innerText
@@ -177,7 +177,7 @@ const newLevelsModule = new Module("levels", async () => {
             })
         })
     } else if (lobbyType === "profile") {
-        newLevelsModule.doAfterNodeAppear('[class*="styles__TitleContainer-"]', async (node) => {
+        await newLevelsModule.doAfterNodeAppear('[class*="styles__TitleContainer-"]', async (node) => {
             let uniqueCheck = () => node.querySelector('[id*="new-elo-level-icon"]')
             if (uniqueCheck()) return
             newLevelsModule.doAfter(() => node.children.length >= 2 && node.querySelector('svg'), async () => {
@@ -217,7 +217,7 @@ const newLevelsModule = new Module("levels", async () => {
         let progress = getBarProgress(elo, gameType)
         let currentLevel = getLevel(elo, gameType);
 
-        newLevelsModule.doAfterNodeAppear('[class*="SkillIcon__StyledSvg"],[class*="BadgeHolder__Holder"]', (node) => {
+        await newLevelsModule.doAfterNodeAppear('[class*="SkillIcon__StyledSvg"],[class*="BadgeHolder__Holder"]', (node) => {
             let uniqueCheck = () => node.parentElement.parentElement.querySelector('[id*="new-elo-level-icon"]')
             if (uniqueCheck()) return
             if (document.getElementById("new-elo-level-icon")) return
@@ -241,7 +241,7 @@ const newLevelsModule = new Module("levels", async () => {
             }
         })
 
-        newLevelsModule.doAfterNodeAppear('[class*="ProgressBar__ProgressHolder"]', async (node) => {
+        await newLevelsModule.doAfterNodeAppear('[class*="ProgressBar__ProgressHolder"]', async (node) => {
             let uniqueCheck = () => node.parentElement.parentElement.parentElement.parentElement.querySelector('[id*="master-progress-bar-container"]')
             if (uniqueCheck()) return
             let section = node.parentElement.parentElement.parentElement
@@ -265,10 +265,9 @@ const newLevelsModule = new Module("levels", async () => {
         })
     } else if (lobbyType === "matchmaking") {
         let partySlots = new Map();
-        newLevelsModule.doAfterNodeAppear('[class*=Matchmaking__PlayHolder]', async (node) => {
+        await newLevelsModule.doAfterNodeAppear('[class*=Matchmaking__PlayHolder]', async (node) => {
             let uniqueCheck = () => node.id === "matchmaking-holder"
             if (uniqueCheck()) return
-            node.id = "matchmaking-holder"
             newLevelsModule.doAfter(() => {
                 let firstChild = node.firstElementChild
                 return firstChild && firstChild?.children?.length === 2 && firstChild?.children[1]?.children?.length === 5
@@ -300,10 +299,11 @@ const newLevelsModule = new Module("levels", async () => {
                         await slot.updateIcon()
                     }
                 })
+                node.id = "matchmaking-holder"
             })
         })
     } else if (lobbyType === "collections") {
-        newLevelsModule.doAfterNodeAppear('[class*="styles__EloText"]', (node) => {
+        await newLevelsModule.doAfterNodeAppear('[class*="styles__EloText"]', (node) => {
             let uniqueCheck = () => node.id === "collection-level-icon"
             if (uniqueCheck()) return
             let eloText = node.innerText

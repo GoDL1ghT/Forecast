@@ -17,6 +17,7 @@ async function loadAllHTMLs() {
         "src/visual/tables/level-progress-table.html",
         "src/visual/tables/team.html",
         "src/visual/tables/player.html",
+        "src/visual/tables/match-counter-arrow.html",
         "src/visual/tables/matchscore.html",
         "src/visual/tables/elo-progress-bar.html",
         "src/visual/tables/elo-progress-bar-master.html",
