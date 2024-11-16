@@ -19,7 +19,7 @@ This project is a browser extension that retrieves and displays statistics for F
 
 ### Method 2: Batch Script Installation (MANUALLY, For Advanced Users)
 
-1. [Download the `.bat` file](https://github.com/GoDL1ghT/Forecast/blob/master/update.bat).
+1. [Download the `.bat` file](https://github.com/TerraMiner/Forecast/blob/master/update.bat).
 2. Create a new folder on your computer and place the `.bat` file in this folder.
 3. Run the `.bat` file by double-clicking on it; it will automatically set up the required files in the folder.
 4. Go to [`chrome://extensions/`](chrome://extensions/) (If necessary, enable developer mode) and click "Load unpacked" to upload the folder.

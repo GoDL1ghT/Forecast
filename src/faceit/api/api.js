@@ -2,12 +2,13 @@ const baseUrlV4 = "https://open.faceit.com/data/v4";
 
 const playerDataCache = new Map();
 const playerGamesDataCache = new Map();
+const playerMatchHistoryCache = new Map();
 const matchDataCache = new Map();
 const oldMatchDataCache = new Map();
 const matchDataStatsCache = new Map();
 
-async function fetchV4(cache, key, url, errorMsg) {
-    const cachedData = cache.get(key);
+async function fetchV4(cache, url, errorMsg) {
+    const cachedData = cache.get(url);
     if (cachedData) return cachedData;
 
     const apiKey = await getApiKey();
@@ -25,7 +26,7 @@ async function fetchV4(cache, key, url, errorMsg) {
     }
 
     const newData = await response.json();
-    cache.set(key, newData);
+    cache.set(url, newData);
     return newData;
 }
 
@@ -33,7 +34,6 @@ async function fetchV4(cache, key, url, errorMsg) {
 async function fetchMatchStats(matchId) {
     return fetchV4(
         matchDataCache,
-        matchId,
         `${baseUrlV4}/matches/${matchId}`,
         "Error when retrieving match statistics"
     );
@@ -42,17 +42,15 @@ async function fetchMatchStats(matchId) {
 async function fetchMatchStatsDetailed(matchId) {
     return fetchV4(
         matchDataStatsCache,
-        matchId,
         `${baseUrlV4}/matches/${matchId}/stats`,
         "Error when retrieving detailed match statistics"
     );
 }
 
-async function getPlayerGameStats(playerId, game, matchAmount = 20) {
+async function getPlayerGameStats(playerId, game, matchAmount = 20, offset = 0) {
     return await fetchV4(
         playerGamesDataCache,
-        playerId,
-        `${baseUrlV4}/players/${playerId}/games/${game}/stats?limit=${matchAmount}`,
+        `${baseUrlV4}/players/${playerId}/games/${game}/stats?limit=${matchAmount}&offset=${offset}`,
         "Error when requesting player game data"
     );
 }
@@ -60,7 +58,6 @@ async function getPlayerGameStats(playerId, game, matchAmount = 20) {
 async function getPlayerStatsById(playerId) {
     return fetchV4(
         playerDataCache,
-        playerId,
         `${baseUrlV4}/players/${playerId}`,
         "Error when requesting player data by ID"
     );
@@ -69,7 +66,6 @@ async function getPlayerStatsById(playerId) {
 async function getPlayerStatsByNickName(nickname) {
     return fetchV4(
         playerDataCache,
-        nickname,
         `${baseUrlV4}/players?nickname=${encodeURIComponent(nickname)}`,
         "Error when requesting player data by nickname"
     );
@@ -122,7 +118,7 @@ function extractLanguage() {
 async function getApiKey() {
     let apiKey = getCookie("forecast-api-key")
     if (!apiKey) {
-        let data = await fetch("https://raw.githubusercontent.com/GoDL1ghT/Forecast/refs/heads/master/api-key")
+        let data = await fetch("https://raw.githubusercontent.com/TerraMiner/Forecast/refs/heads/master/api-key")
         apiKey = await data.text()
         setCookie("forecast-api-key", apiKey, 5)
     }

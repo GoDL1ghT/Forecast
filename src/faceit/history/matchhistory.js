@@ -1,184 +1,168 @@
-const matchDatas = [];
+const MAX_REQUESTS_PER_SECOND = 20;
+const requestQueue = [];
+let activeRequests = 0;
+const matchIds = [];
+const matchDetailedDatas = new Map();
+const loadingMatches = new Set();
+const nodesToBatch = [];
+const matchNodesByMatchStats = [];
 
 class MatchNodeByMatchStats {
-    constructor(node) {
-        this.node = node
-        this.matchStats = null
-        this.rounds = 0
-        this.score = ""
-        this.isWin = false
+    constructor(node, matchId) {
+        this.node = node;
+        this.matchId = matchId;
+        this.matchStats = null;
+        this.rounds = 0;
+        this.score = "";
+        this.isWin = false;
     }
 
-    async setupStatsToNode() {
-        this.node.setAttribute("data-processed", "true");
-        if (!this.matchStats) return
-        let stats = this.matchStats;
-        let kills = parseInt(stats["Kills"], 10);
-        let assists = parseInt(stats["Assists"], 10);
-        let deaths = parseInt(stats["Deaths"], 10);
-        let rounds = this.rounds;
-        let adr = parseInt(stats["ADR"], 10);
-        let kdratio = parseFloat(stats["K/D Ratio"]);
-        let krratio = parseFloat(stats["K/R Ratio"]);
-        let entryCount = parseInt(stats["Entry Count"], 10)
-        let firstKills = parseInt(stats["First Kills"], 10)
-        let entryImpact = entryCount < firstKills ? entryCount : firstKills
+    async loadMatchStats(playerId) {
+        if (!matchDetailedDatas.has(this.matchId)) {
+            await processQueue(() => getDetailedMatchData(this.matchId));
+        }
+        const detailedMatchInfo = matchDetailedDatas.get(this.matchId);
+        if (!detailedMatchInfo) return;
 
-        let kast = ((kills + assists + entryImpact) / rounds) * 100;
-        let impact = (kills + 0.5 * assists - entryImpact * 1.5) / rounds;
+        const { player: stats, team } = findPlayerInTeamById(detailedMatchInfo.rounds[0].teams, playerId);
+        this.matchStats = stats?.["player_stats"];
+        this.rounds = parseInt(detailedMatchInfo.rounds[0].round_stats["Rounds"], 10);
+        this.score = detailedMatchInfo.rounds[0].round_stats["Score"].replace(/\s+/g, '');
+        this.isWin = team["team_stats"]["Team Win"] === "1";
 
-        let rating = (
-            0.0073 * kast +
-            0.3591 * krratio +
-            -0.5329 * (deaths / rounds) +
-            0.2372 * impact +
-            0.0032 * adr +
-            0.1587
-        ).toFixed(2);
-
-        insertStatsIntoNode(this.node, this.score.replace(/\s+/g, ''), rating, kills, deaths, kdratio, krratio, adr, this.isWin)
+        this.setupStatsToNode();
     }
-}
 
-function insertStatsIntoNode(root, score, raiting, k, d, kd, kr, adr, isWin) {
-    let table = getHtmlResource("src/visual/tables/matchscore.html").cloneNode(true)
-    let fourthNode = root?.children[3];
-    if (fourthNode && fourthNode.children.length === 1) {
-        let singleChild = fourthNode.children[0];
-        table.appendToAndHide(singleChild)
-        matchHistoryModule.removalNode(table);
-        insertRow(table, score, raiting, k, d, kd, kr, adr, isWin)
+    setupStatsToNode() {
+        if (!this.matchStats) return;
+        const { "Kills": k, "Assists": a, "Deaths": d, "ADR": adr, "K/D Ratio": kd, "K/R Ratio": kr, "Entry Count": entryCount, "First Kills": firstKills } = this.matchStats;
+        const entryImpact = Math.min(parseInt(entryCount, 10), parseInt(firstKills, 10));
+        const rounds = this.rounds;
+        const kast = ((parseInt(k, 10) + parseInt(a, 10) + entryImpact) / rounds) * 100;
+        const impact = (parseInt(k, 10) + 0.5 * parseInt(a, 10) - entryImpact * 1.5) / rounds;
+
+        const rating = (0.0073 * kast + 0.3591 * parseFloat(kr) - 0.5329 * (parseInt(d, 10) / rounds) + 0.2372 * impact + 0.0032 * parseInt(adr, 10) + 0.1587).toFixed(2);
+        insertStatsIntoNode(this.node, this.score, rating, k, d, kd, kr, adr, this.isWin);
     }
 }
 
-function insertRow(node, score, raiting, k, d, kd, kr, adr, isWin) {
-    const table = node.getElementsByTagName('tbody')[0];
+function insertStatsIntoNode(root, score, rating, k, d, kd, kr, adr, isWin) {
+    const tableTemplate = getHtmlResource("src/visual/tables/matchscore.html").cloneNode(true);
+    const fourthNode = root?.children[3];
+    if (fourthNode?.children.length === 1) {
+        matchHistoryModule.removalNode(tableTemplate);
+        insertRow(tableTemplate, score, rating, k, d, kd, kr, adr, isWin);
+        tableTemplate.appendToAndHide(fourthNode.children[0]);
+    }
+}
+
+function insertRow(node, score, rating, k, d, kd, kr, adr, isWin) {
+    const table = node.querySelector('tbody');
     const newRow = table.insertRow();
-    const scoreCell = newRow.insertCell(0);
-    const raitingCell = newRow.insertCell(1);
-    const kdCell = newRow.insertCell(2);
-    const kdkrCell = newRow.insertCell(3);
-    const adrCell = newRow.insertCell(4);
-    let green = "rgb(61,255,108)";
-    let red = "rgb(255, 0, 43)";
+    const green = "rgb(61,255,108)", red = "rgb(255, 0, 43)", white = "rgb(255, 255, 255)";
 
-    let scoreNode = document.createElement("div");
-    scoreNode.style.color = isWin ? green : red;
-    scoreNode.innerHTML = score;
+    const createColoredDiv = (text, condition, isSlash = false) => {
+        const div = document.createElement("span");
+        div.style.color = isSlash ? white : (condition ? green : red);
+        if (condition) div.style.fontWeight = "bold";
+        div.innerHTML = text;
+        return div;
+    };
 
-    let raitingNode = document.createElement("div");
-    raitingNode.style.color = raiting > 1.0 ? green : red;
-    raitingNode.innerHTML = raiting;
+    const createCompositeCell = (texts) => {
+        const container = document.createElement("div");
+        texts.forEach(({ text, condition, isSlash }) => container.appendChild(createColoredDiv(text, condition, isSlash)));
+        return container;
+    };
 
-    let killsDeathNode  = document.createElement("div");
-    killsDeathNode.style.color = kd > 1.0 ? green : red;
-    killsDeathNode.innerHTML = `${k}/${d}`;
-
-    scoreCell.appendChild(scoreNode);
-    raitingCell.appendChild(raitingNode);
-    kdCell.appendChild(killsDeathNode)
-    kdkrCell.innerHTML = `${kd}/${kr}`;
-    adrCell.innerHTML = adr;
+    let [scorePart1, scorePart2] = score.split("/");
+    newRow.insertCell(0).appendChild(createCompositeCell([{ text: scorePart1, condition: isWin }, { text: "/", isSlash: true }, { text: scorePart2, condition: isWin }]));
+    newRow.insertCell(1).appendChild(createColoredDiv(rating, rating >= 1.0));
+    newRow.insertCell(2).appendChild(createCompositeCell([{ text: k, condition: k >= d }, { text: "/", isSlash: true }, { text: d, condition: k >= d }]));
+    newRow.insertCell(3).appendChild(createCompositeCell([{ text: kd, condition: kd >= 1.0 }, { text: "/", isSlash: true }, { text: kr, condition: kr >= 0.65 }]));
+    newRow.insertCell(4).appendChild(createColoredDiv(adr, adr >= 65));
 }
 
 const matchHistoryModule = new Module("matchhistory", async () => {
-    const enabled = await isExtensionEnabled() && await isSettingEnabled("matchhistory");
-    if (!enabled) return;
-    doAfterTableNodeAppear(async (node) => {
-        const tableRows = node.querySelectorAll("tr[class*='styles__MatchHistoryTableRow']");
-        const rowsArray = Array.from(tableRows);
-        rowsArray.slice(1, 31).forEach((node) => {
-            if (!node.hasAttribute("data-processed")) {
-                matchDatas.push(new MatchNodeByMatchStats(node));
-            }
-        });
-        await scanPlayerStatistic();
-        await Promise.all(matchDatas.map(async (data) => {
-            await data.setupStatsToNode();
-        }));
-    })
-}, async () => {
-    matchDatas.forEach((data) => {
-        data.node.remove()
-    })
-    matchDatas.length = 0;
-})
+    if (!(await isExtensionEnabled()) || !(await isSettingEnabled("matchhistory"))) return;
 
-async function scanPlayerStatistic() {
-    let playerNickName = extractPlayerNick();
-    const playerData = await getPlayerStatsByNickName(playerNickName);
-    const playerId = playerData.player_id;
-    const playerGameDatas = await getPlayerGameStats(playerId, extractGameType(), 30);
-    const matchesInfo = playerGameDatas.items
-    const filteredMatchDatas = matchDatas.filter((data) => {
-        return !data.node.hasAttribute("data-processed")
-    })
-    await fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, playerId);
-}
+    const playerId = (await getPlayerStatsByNickName(extractPlayerNick())).player_id;
+    matchHistoryModule.playerId = playerId;
+    await loadAllPlayerMatches(playerId);
 
-async function fetchMatchStatsForPlayers(filteredMatchDatas, matchesInfo, playerId) {
-    const promises = filteredMatchDatas.map(async (matchNodeByStats, i) => {
-        let matchInfo = matchesInfo[i];
-        if (matchInfo) {
-            let matchId = matchInfo.stats["Match Id"];
-            let detailedMatchInfo = await fetchMatchStatsDetailed(matchId);
-            let matchStats = detailedMatchInfo.rounds[0];
-            let {player: detailedPlayerStats, team: team} = findPlayerInTeamById(matchStats.teams, playerId);
-            matchNodeByStats.matchStats = detailedPlayerStats["player_stats"];
-            matchNodeByStats.rounds = parseInt(matchStats.round_stats["Rounds"], 10);
-            matchNodeByStats.score = matchStats.round_stats["Score"];
-            matchNodeByStats.isWin = team["team_stats"]["Team Win"] === "1";
+    let ended = false;
+    await matchHistoryModule.doAfterAllNodeAppearPack("tr[class*='styles__MatchHistoryTableRow']:not([id*='table-row-id'])", async (nodes) => {
+        if (ended) return;
+        for (let node of nodes) {
+            const index = Array.from(node.parentNode.children).indexOf(node) - 1;
+            if (node.id === `table-row-id-${index}`) continue;
+            node.id = `table-row-id-${index}`;
+            if (index === 299) ended = true;
+            if (index === -1) continue;
+            nodesToBatch.push(new MatchNodeByMatchStats(node, matchIds[index]));
         }
     });
 
-    await Promise.all(promises);
+    matchHistoryModule.every(500, async () => {
+        const batch = [...nodesToBatch];
+        nodesToBatch.length = 0;
+        await Promise.all(batch.map(matchNode => processQueue(() => matchNode.loadMatchStats(playerId))));
+    });
+}, async () => {
+    matchNodesByMatchStats.forEach(data => data.node.remove());
+    matchNodesByMatchStats.length = 0;
+    matchIds.length = 0;
+});
+
+async function getDetailedMatchData(matchId) {
+    if (matchDetailedDatas.has(matchId)) return matchDetailedDatas.get(matchId);
+    if (loadingMatches.has(matchId)) return;
+
+    loadingMatches.add(matchId);
+    try {
+        const data = await fetchMatchStatsDetailed(matchId);
+        matchDetailedDatas.set(matchId, data);
+    } catch (error) {
+        console.error(error);
+    } finally {
+        loadingMatches.delete(matchId);
+    }
+    return matchDetailedDatas.get(matchId);
+}
+
+function processQueue(requestFn) {
+    return new Promise(resolve => {
+        if (activeRequests >= MAX_REQUESTS_PER_SECOND) {
+            requestQueue.push(() => requestFn?.().then(resolve));
+        } else {
+            activeRequests++;
+            requestFn?.().then(resolve).finally(() => {
+                activeRequests--;
+                if (requestQueue.length) {
+                    let nextRequest = requestQueue.shift();
+                    setTimeout(() => processQueue(nextRequest), 1000 / MAX_REQUESTS_PER_SECOND);
+                }
+            });
+        }
+    });
+}
+
+async function loadAllPlayerMatches(playerId) {
+    const results = await Promise.all([0, 100, 200].map(from => loadPlayerMatches(playerId, from)));
+    results.flat().forEach(id => matchIds.push(id));
+}
+
+async function loadPlayerMatches(playerId, from) {
+    const playerGameDatas = await getPlayerGameStats(playerId, extractGameType(), 100, from);
+    return playerGameDatas.items.map(item => item.stats["Match Id"]);
 }
 
 function findPlayerInTeamById(teams, playerId) {
-    for (let team of teams) {
-        let player = team.players.find(player => player.player_id === playerId);
-        if (player) {
-            return {team: team, player: player};
-        }
+    for (const team of teams) {
+        const player = team.players.find(player => player.player_id === playerId);
+        if (player) return { team, player };
     }
-    return null;
-}
-
-function doAfterTableNodeAppear(callback) {
-    let matchHistoryNode = document.getElementById("match-history-table")
-    if (matchHistoryNode) {
-        matchHistoryModule.processedNode(matchHistoryNode);
-        callback(matchHistoryNode)
-    }
-
-    matchHistoryNode = document.querySelector('[class*="styles__MatchHistoryTable-"]')
-    if (matchHistoryNode) {
-        matchHistoryNode.id = "match-history-table"
-        matchHistoryModule.processedNode(matchHistoryNode);
-        callback(matchHistoryNode)
-    }
-
-    function isUniqueNode(node) {
-        return !node.hasAttribute('data-processed') && node.querySelector(`tbody`);
-    }
-
-    let found = !!document.getElementById("match-history-table")
-    matchHistoryModule.observe(function search(node) {
-        if (matchDatas.length >= 30) return;
-        if (found) return
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.matches('[class*="styles__MatchHistoryTable-"]') || node.querySelector('[class*="styles__MatchHistoryTable-"]')) {
-                const targetNode = node.matches('[class*="styles__MatchHistoryTable-"]') ? node : node.querySelector('[class*="styles__MatchHistoryTable-"]');
-                if (isUniqueNode(targetNode)) {
-                    targetNode.id = "match-history-table"
-                    matchHistoryModule.processedNode(targetNode);
-                    callback(targetNode);
-                    found = true
-                }
-            }
-        }
-    })
+    return {};
 }
 
 moduleListener(matchHistoryModule);
-

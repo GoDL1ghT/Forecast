@@ -100,16 +100,31 @@ const newLevelsModule = new Module("levels", async () => {
     const enabled = await isExtensionEnabled() && await isSettingEnabled("eloranking");
     if (!enabled) return;
 
-    doAfterSelfNickNodeAppear(async (nick) => {
-        doAfterStatisticBarNodeAppear(nick, async (node) => {
-            let newTable = getHtmlResource("src/visual/tables/elo-progress-bar.html").cloneNode(true)
-            newTable.appendToAndHide(node)
-            newLevelsModule.removalNode(newTable)
-            await insertStatsToEloBar(nick)
-        })
+    newLevelsModule.doAfterNodeAppear('#main-header-height-wrapper div[class*="styles__ProfileContainer"]', async (element) => {
+        let uniqueCheck = () => element.parentElement.querySelector('[id*="statistic-progress-bar"]')
+        if (!uniqueCheck()) {
+            newLevelsModule.doAfter(() => element.querySelector('[class*="styles__NicknameText-"]'), async () => {
+                if (uniqueCheck()) return
+                let nick = element.querySelector('[class*="styles__NicknameText-"]').innerText
+                let newNode = document.createElement("div")
+                let result = element.parentElement
+                result.children[1].insertAdjacentElement("afterend", newNode)
+                let newTable = getHtmlResource("src/visual/tables/elo-progress-bar.html").cloneNode(true)
+                newTable.id = "statistic-progress-bar"
+                newTable.appendToAndHide(newNode)
+                newLevelsModule.removalNode(newTable)
+                await insertStatsToEloBar(nick)
+            })
+        }
+        if (element.parentElement.hasAttribute("data-repeek-level-progress")) {
+            newLevelsModule.doAfter(() => element.querySelector('[class*="styles__NicknameText-"]'), async () => {
+                let nick = element.querySelector('[class*="styles__NicknameText-"]').innerText
+                removeIfRepeekBarAppear(nick)
+            })
+        }
     })
 
-    doAfterWidgetEloNodeAppear(async (node) => {
+    newLevelsModule.doAfterNodeAppear('[class*="EloWidget__Holder-"]', async (node) => {
         let nodeToRemove = node.parentNode.parentNode
         nodeToRemove.parentNode.id = "edited-widget"
         hideNode(nodeToRemove)
@@ -125,6 +140,8 @@ const newLevelsModule = new Module("levels", async () => {
                 return "profile";
             case /^https:\/\/www\.faceit\.com\/\w+\/cs2\/room\/[\w\-]+(\/.*)?$/.test(url):
                 return "matchroom";
+            case /^https:\/\/www\.faceit\.com\/\w+\/matchmaking$/.test(url):
+                return "matchmaking";
             default:
                 return null;
         }
@@ -134,49 +151,79 @@ const newLevelsModule = new Module("levels", async () => {
     if (lobbyType === "matchroom") {
         let matchId = extractMatchId()
         let matchData = await fetchOldMatchStats(matchId);
-        doAfterNickNameNodeAppear(async (nickNode) => {
-            handleMatchRoomLobby(nickNode, matchData)
+        newLevelsModule.doAfterAllNodeAppear('[class*="Nickname__Name-"]:not([id*="-lvlicon-"])', async (nickNode) => {
+            let uniqueCheck = () => nickNode.id?.includes("-lvlicon-")
+            if (uniqueCheck()) return
+            let nickname = nickNode.innerText
+            let playerData = findPlayerInTeamByNickname(matchData["teams"], nickname)
+            let elo = parseInt(playerData["elo"], 10)
+            let currentLevel = getLevel(elo, "cs2");
+            let playerCardNodes = nickNode.parentNode.parentNode.parentNode.parentNode.parentNode.children
+            newLevelsModule.doAfter(() => playerCardNodes.length === 3, () => {
+                if (uniqueCheck()) return
+                let section = playerCardNodes[playerCardNodes.length - 1].firstChild
+                newLevelsModule.doAfter(() => section.querySelector("[class*=SkillIcon__StyledSvg]") || section.querySelector("[class*=BadgeHolder__Holder]"), () => {
+                    if (uniqueCheck()) return
+                    let newIcon = levelIcons.get(currentLevel).cloneNode(true).firstChild
+                    let oldIcon = section.querySelector("[class*=SkillIcon__StyledSvg]") || section.querySelector("[class*=BadgeHolder__Holder]");
+                    if (typeof oldIcon.className === "string" && oldIcon.className.includes("BadgeHolder__Holder")) {
+                        newIcon.appendTo(oldIcon)
+                    } else {
+                        newIcon.appendToAndHide(oldIcon)
+                    }
+                    nickNode.id = `${nickname}-lvlicon-${currentLevel}`
+                    newLevelsModule.removalNode(newIcon)
+                })
+            })
         })
     } else if (lobbyType === "profile") {
-        doAfterMainLevelAppear(async (node) => {
-            let nick = extractPlayerNick()
-            let playerStatistic = await getPlayerStatsByNickName(nick);
-            let {gameStats, gameType} = getStatistic(playerStatistic)
-            if (!gameStats) return
-            if (document.getElementById("new-elo-level-icon")) return
-            let isTopIcon = node.getElementsByTagName("i").length > 0
-            if (!gameStats) return
-            let elo = parseInt(gameStats["faceit_elo"], 10);
-            let currentLevel = getLevel(elo, gameType);
-            let icon = levelIcons.get(currentLevel).cloneNode(true).firstChild
-            icon.id = "new-elo-level-icon"
-            newLevelsModule.removalNode(icon);
-            if (isTopIcon) {
-                node.appendChild(icon)
-            } else {
-                newLevelsModule.doAfter(() => !!node.getElementsByTagName("svg")[0], () => {
+        newLevelsModule.doAfterNodeAppear('[class*="styles__TitleContainer-"]', async (node) => {
+            let uniqueCheck = () => node.querySelector('[id*="new-elo-level-icon"]')
+            if (uniqueCheck()) return
+            newLevelsModule.doAfter(() => node.children.length >= 2 && node.querySelector('svg'), async () => {
+                if (uniqueCheck()) return
+                let badgeHolder = node.querySelector('[class*="BadgeHolder__Holder"]')
+                let svgNode = node.querySelector('svg')
+                let isTopIcon = !!badgeHolder
+                let nick = extractPlayerNick()
+                let playerStatistic = await getPlayerStatsByNickName(nick);
+                let {gameStats, gameType} = getStatistic(playerStatistic)
+                if (!gameStats) return
+                if (document.getElementById("new-elo-level-icon")) return
+                if (!gameStats) return
+                let elo = parseInt(gameStats["faceit_elo"], 10);
+                let currentLevel = getLevel(elo, gameType);
+                let icon = levelIcons.get(currentLevel).cloneNode(true).firstChild
+                icon.id = "new-elo-level-icon"
+                if (isTopIcon) {
+                    let parentElement = badgeHolder.parentElement;
+                    parentElement.appendChild(icon)
+                    parentElement.style.flexDirection = "row"
+                } else {
                     if (document.getElementById("new-elo-level-icon")) return
-                    let oldIcon = node.getElementsByTagName("svg")[0]
-                    icon.appendToAndHide(oldIcon)
-                })
-            }
+                    icon.appendToAndHide(svgNode)
+                    newLevelsModule.removalNode(icon);
+                }
+            })
         })
     } else if (lobbyType === "stats") {
-        doAfterMasterLevelNodeAppear(async (node) => {
-            let nick = extractPlayerNick()
-            let playerStatistic = await getPlayerStatsByNickName(nick);
-            let {gameStats, gameType} = getStatistic(playerStatistic)
-            if (!gameStats) return
+        let nick = extractPlayerNick()
+        let playerStatistic = await getPlayerStatsByNickName(nick);
+        let {gameStats, deprecatedGameType} = getStatistic(playerStatistic)
+        let gameType = extractGameType() || deprecatedGameType;
+        if (!gameStats) return
+        let levelRanges = gameLevelRanges[gameType];
+        let elo = parseInt(gameStats["faceit_elo"], 10);
+        let progress = getBarProgress(elo, gameType)
+        let currentLevel = getLevel(elo, gameType);
+
+        newLevelsModule.doAfterNodeAppear('[class*="SkillIcon__StyledSvg"],[class*="BadgeHolder__Holder"]', (node) => {
+            let uniqueCheck = () => node.parentElement.parentElement.querySelector('[id*="new-elo-level-icon"]')
+            if (uniqueCheck()) return
             if (document.getElementById("new-elo-level-icon")) return
-            if (!gameStats) return
-            let elo = parseInt(gameStats["faceit_elo"], 10);
-            let levelRanges = gameLevelRanges[gameType];
-            let currentLevel = getLevel(elo, gameType);
-            let progress = getBarProgress(elo, gameType)
             let icon = levelIcons.get(currentLevel).cloneNode(true).firstChild
             icon.id = "new-elo-level-icon"
             newLevelsModule.removalNode(icon);
-            if (document.getElementById("new-elo-level-icon")) return
             if (lobbyType === "stats") {
                 icon.style.width = '48px';
                 icon.style.height = '48px';
@@ -192,77 +239,87 @@ const newLevelsModule = new Module("levels", async () => {
             } else {
                 icon.appendToAndHide(node)
             }
-            doAfterMasterProgressBarAppear(async (node) => {
-                let section = node.parentElement.parentElement.parentElement
+        })
 
-                let newTable = getHtmlResource("src/visual/tables/elo-progress-bar-master.html").cloneNode(true)
-                newTable.appendToAndHide(section)
-                newLevelsModule.removalNode(newTable)
+        newLevelsModule.doAfterNodeAppear('[class*="ProgressBar__ProgressHolder"]', async (node) => {
+            let uniqueCheck = () => node.parentElement.parentElement.parentElement.parentElement.querySelector('[id*="master-progress-bar-container"]')
+            if (uniqueCheck()) return
+            let section = node.parentElement.parentElement.parentElement
 
-                let {min: currmin} = levelRanges[currentLevel - 1]
-                let {min: nextmin} = currentLevel === levelRanges.length ? {min: '∞'} : levelRanges[currentLevel]
+            let newTable = getHtmlResource("src/visual/tables/elo-progress-bar-master.html").cloneNode(true)
+            newTable.appendToAndHide(section)
+            newLevelsModule.removalNode(newTable)
+            newTable.id = "master-progress-bar-container"
 
-                document.getElementById("master-progress-bar").style.width = `${progress}%`;
-                let prevLevelIcon = levelIcons.get(currentLevel - 1)?.cloneNode(true)?.firstChild
-                let nextLevelIcon = levelIcons.get(currentLevel + 1)?.cloneNode(true)?.firstChild
-                if (prevLevelIcon) prevLevelIcon.appendToAndHide(document.getElementById("master-min-icon"))
-                if (nextLevelIcon) nextLevelIcon.appendToAndHide(document.getElementById("master-max-icon"))
+            let {min: currmin} = levelRanges[currentLevel - 1]
+            let {min: nextmin} = currentLevel === levelRanges.length ? {min: '∞'} : levelRanges[currentLevel]
 
-                document.getElementById("master-min-value").textContent = currmin
-                document.getElementById("master-max-value").textContent = nextmin
+            document.getElementById("master-progress-bar").style.width = `${progress}%`;
+            let prevLevelIcon = levelIcons.get(currentLevel - 1)?.cloneNode(true)?.firstChild
+            let nextLevelIcon = levelIcons.get(currentLevel + 1)?.cloneNode(true)?.firstChild
+            if (prevLevelIcon) prevLevelIcon.appendToAndHide(document.getElementById("master-min-icon"))
+            if (nextLevelIcon) nextLevelIcon.appendToAndHide(document.getElementById("master-max-icon"))
+
+            document.getElementById("master-min-value").textContent = currmin
+            document.getElementById("master-max-value").textContent = nextmin
+        })
+    } else if (lobbyType === "matchmaking") {
+        let partySlots = new Map();
+        newLevelsModule.doAfterNodeAppear('[class*=Matchmaking__PlayHolder]', async (node) => {
+            let uniqueCheck = () => node.id === "matchmaking-holder"
+            if (uniqueCheck()) return
+            node.id = "matchmaking-holder"
+            newLevelsModule.doAfter(() => {
+                let firstChild = node.firstElementChild
+                return firstChild && firstChild?.children?.length === 2 && firstChild?.children[1]?.children?.length === 5
+            }, async () => {
+                if (uniqueCheck()) return
+                let table = Array.from(node.firstElementChild.children)[1]
+                newLevelsModule.every(100, async () => {
+                    if (partySlots.size < 5) {
+                        let i = 0
+                        Array.from(table.children).forEach((slot) => {
+                            if (slot.id !== `party-slot-${i}`) {
+                                slot.id = `party-slot-${i}`
+                                partySlots.set(`party-slot-${i}`, new PartySlot(slot, i))
+                            }
+                            i++
+                        })
+                    }
+
+                    for (let j = 0; j < partySlots.size; j++) {
+                        let id = `party-slot-${j}`
+                        let slot = partySlots.get(id)
+                        slot.removeOldIcon()
+                        if (!slot.isNeedRemove() && !slot.isEmpty) {
+                            partySlots.delete(id)
+                            slot.slotNode.id = ""
+                            if (slot.newIcon) slot.newIcon.remove()
+                            continue
+                        }
+                        await slot.updateIcon()
+                    }
+                })
+            })
+        })
+    } else if (lobbyType === "collections") {
+        newLevelsModule.doAfterNodeAppear('[class*="styles__EloText"]', (node) => {
+            let uniqueCheck = () => node.id === "collection-level-icon"
+            if (uniqueCheck()) return
+            let eloText = node.innerText
+            let elo = parseInt(eloText.replace(/[\s,._]/g, ''), 10)
+            newLevelsModule.doAfter(() => node.parentElement.querySelector('svg'), () => {
+                if (uniqueCheck()) return
+                let oldIcon = node.parentElement.querySelector('svg')
+                let currentLevel = getLevel(elo, "cs2");
+                let newIcon = levelIcons.get(currentLevel).cloneNode(true)
+                let innerNewIcon = newIcon.firstElementChild;
+                innerNewIcon.appendToAndHide(oldIcon)
+                newLevelsModule.removalNode(innerNewIcon)
+                node.id = "collection-level-icon"
             })
         })
     }
-
-    let partySlots = new Map();
-
-    doAfterMatchroomLobbyAppear(async (node) => {
-        newLevelsModule.doAfter(() => {
-            let firstChild = node.firstElementChild
-            return firstChild && firstChild?.children?.length === 2 && firstChild?.children[1]?.children?.length === 5
-        }, async () => {
-            let table = Array.from(node.firstElementChild.children)[1]
-            newLevelsModule.every(100, async () => {
-                if (partySlots.size < 5) {
-                    let i = 0
-                    Array.from(table.children).forEach((slot) => {
-                        if (slot.id !== `party-slot-${i}`) {
-                            slot.id = `party-slot-${i}`
-                            partySlots.set(`party-slot-${i}`, new PartySlot(slot, i))
-                        }
-                        i++
-                    })
-                }
-
-                for (let j = 0; j < partySlots.size; j++) {
-                    let id = `party-slot-${j}`
-                    let slot = partySlots.get(id)
-                    slot.removeOldIcon()
-                    if (!slot.isNeedRemove() && !slot.isEmpty) {
-                        partySlots.delete(id)
-                        slot.slotNode.id = ""
-                        if (slot.newIcon) slot.newIcon.remove()
-                        continue
-                    }
-                    await slot.updateIcon()
-                }
-            })
-        })
-    })
-
-    doAfterNickNameCardNodeAppear(async (node) => {
-        let innerNode = node.querySelector('[class*="Tag__Container-"]')
-        newLevelsModule.doAfter(() => innerNode.childNodes && innerNode.childNodes.length > 1, () => {
-            let eloText = innerNode.querySelector('[class*="Text-sc"]').firstChild.firstElementChild.innerText
-            let elo = parseInt(eloText.replace(/[\s,._]/g, ''), 10)
-            let oldIcon = innerNode.childNodes[0]
-            let currentLevel = getLevel(elo, "cs2");
-            let newIcon = levelIcons.get(currentLevel).cloneNode(true)
-            let innerNewIcon = newIcon.firstElementChild;
-            innerNewIcon.appendToAndHide(oldIcon)
-            newLevelsModule.removalNode(innerNewIcon)
-        })
-    })
 
     doAfterSearchPlayerNodeAppear(async (node) => {
         newLevelsModule.doAfter(() => node.childNodes && node.childNodes.length > 2, async () => {
@@ -307,27 +364,6 @@ function findPlayerInTeamByNickname(teams, nickname) {
     return null;
 }
 
-function handleMatchRoomLobby(nickNode, matchData) {
-    let playerCardNodes = nickNode.parentNode.parentNode.parentNode.parentNode.parentNode.children
-    let nickname = nickNode.innerText
-    let playerData = findPlayerInTeamByNickname(matchData["teams"], nickname)
-    let elo = parseInt(playerData["elo"], 10)
-    newLevelsModule.doAfter(() => playerCardNodes.length === 3, () => {
-        let section = playerCardNodes[playerCardNodes.length - 1].firstChild
-        newLevelsModule.doAfter(() => section.querySelector("[class*=SkillIcon__StyledSvg]") || section.querySelector("[class*=BadgeHolder__Holder]"), () => {
-            let currentLevel = getLevel(elo, "cs2");
-            let newIcon = levelIcons.get(currentLevel).cloneNode(true).firstChild
-            let oldIcon = section.querySelector("[class*=SkillIcon__StyledSvg]") || section.querySelector("[class*=BadgeHolder__Holder]");
-            if (typeof oldIcon.className === "string" && oldIcon.className.includes("BadgeHolder__Holder")) {
-                newIcon.appendTo(oldIcon)
-            } else {
-                newIcon.appendToAndHide(oldIcon)
-            }
-            newLevelsModule.removalNode(newIcon)
-        })
-    })
-}
-
 async function insertStatsToEloBar(nick) {
     let gameType = "cs2"
     let playerStatistic = await getPlayerStatsByNickName(nick);
@@ -359,25 +395,6 @@ async function insertStatsToEloBar(nick) {
     }
 }
 
-function doAfterMatchroomLobbyAppear(callback) {
-    let existLobby = document.getElementById("marked-party-lobby") || document.querySelector('[class*=Matchmaking__PlayHolder]');
-    if (existLobby) callback(existLobby)
-    newLevelsModule.observe(function search(node) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.hasAttribute('data-processed')) return;
-            const hasContainer = node.matches('[class*=Matchmaking__PlayHolder]');
-
-            if (hasContainer) {
-                newLevelsModule.processedNode(node);
-                node.id = "marked-party-lobby"
-                callback(node);
-                return;
-            }
-            node.childNodes.forEach(search);
-        }
-    })
-}
-
 function doAfterSearchPlayerNodeAppear(callback) {
     const targetHrefPattern = new RegExp(`^/${extractLanguage()}/players\/([a-zA-Z0-9-_]+)$`);
 
@@ -399,10 +416,8 @@ function doAfterSearchPlayerNodeAppear(callback) {
     })
 }
 
-function doAfterStatisticBarNodeAppear(nick, callback) {
+function removeIfRepeekBarAppear(nick) {
     const targetHrefPattern = new RegExp(`^/${extractLanguage()}/players/${nick}/stats/`);
-
-    let found = !!document.getElementById("statistic-progress-bar");
 
     newLevelsModule.observe(function searchForRemove(node) {
         if (node.nodeType === Node.ELEMENT_NODE) {
@@ -414,162 +429,6 @@ function doAfterStatisticBarNodeAppear(nick, callback) {
                 return;
             }
             node.childNodes.forEach(searchForRemove);
-        }
-    })
-
-    newLevelsModule.observe(function search(node) {
-        if (found) return;
-
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            let selector = '#main-header-height-wrapper div[class*="styles__ProfileContainer"]'
-            let appearNode = document.querySelector(selector)
-            if (appearNode) {
-                let newNode = document.createElement("div")
-                let result = appearNode.parentElement
-                result.children[1].insertAdjacentElement("afterend", newNode)
-                callback(newNode);
-                found = true;
-                return;
-            }
-            node.childNodes.forEach(search);
-        }
-    })
-}
-
-function doAfterSelfNickNodeAppear(callback) {
-
-    let selfNickNode = document.querySelector('[class*="styles__NicknameText-"]')
-    if (selfNickNode) {
-        selfNickNode.id = "self-nickname-node"
-        callback(selfNickNode.innerText)
-    }
-
-    let found = !!document.getElementById("self-nickname-node")
-
-    newLevelsModule.observe(function search(node) {
-        if (found) return;
-
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.matches('[class*="styles__NicknameText-"]')) {
-                callback(node.innerText)
-                found = true;
-                return;
-            }
-            node.childNodes.forEach(search);
-        }
-    })
-}
-
-function doAfterMainLevelAppear(callback) {
-    let mainLevelNode = document.querySelector('[class*="styles__TitleContainer-"]');
-    if (mainLevelNode) {
-        callback(mainLevelNode)
-        return
-    }
-
-    let found = false;
-
-    newLevelsModule.observe(function search(node) {
-        if (found) return;
-        if (node.nodeType === Node.ELEMENT_NODE && node.matches('[class*="styles__TitleContainer-"]')) {
-            found = true;
-            const svgObserver = new MutationObserver(innerMutations => {
-                for (const innerMutation of innerMutations) {
-                    if (innerMutation.type === 'childList') {
-                        if (node.querySelector('svg')) {
-                            callback(node);
-                            svgObserver.disconnect();
-                            break;
-                        }
-                    }
-                }
-            });
-            svgObserver.observe(node, {
-                childList: true,
-                subtree: true
-            });
-        }
-        node.childNodes.forEach(search);
-    })
-}
-
-function doAfterMasterLevelNodeAppear(callback) {
-    let mainLevelNode = document.querySelector('[class*="SkillIcon__StyledSvg"]');
-    if (!mainLevelNode) mainLevelNode = document.querySelector('[class*="BadgeHolder__Holder"]');
-    if (mainLevelNode) {
-        callback(mainLevelNode)
-        return
-    }
-
-    newLevelsModule.observe(function search(node) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.matches('[class*="SkillIcon__StyledSvg"]') || node.matches('[class*="BadgeHolder__Holder"]')) {
-                callback(node);
-                return;
-            }
-            node.childNodes.forEach(search);
-        }
-    })
-}
-
-function doAfterMasterProgressBarAppear(callback) {
-    let mainProgressbar = document.querySelector('[class*="ProgressBar__ProgressHolder"]');
-    if (mainProgressbar) {
-        callback(mainProgressbar)
-        return
-    }
-
-    let found = !!document.getElementById("master-progress-bar-container");
-    newLevelsModule.observe(function search(node) {
-        if (found) return;
-        if (node.nodeType === Node.ELEMENT_NODE && node.matches('[class*="ProgressBar__ProgressHolder"]')) {
-            found = true;
-            callback(node);
-            return;
-        }
-        node.childNodes.forEach(search);
-    })
-}
-
-function doAfterWidgetEloNodeAppear(callback) {
-    let found = !!document.getElementById("edited-widget");
-    newLevelsModule.observe(function search(node) {
-        if (found) return;
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.matches('[class*="EloWidget__Holder-"]')) {
-                callback(node)
-                found = true;
-                return;
-            }
-            node.childNodes.forEach(search);
-        }
-    })
-}
-
-function doAfterNickNameCardNodeAppear(callback) {
-    newLevelsModule.observe(function search(node) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.matches('[class*="UserStats__StatsContainer-"]') || node.querySelector('[class*="UserStats__StatsContainer-"]')) {
-                callback(node)
-                return;
-            }
-            node.childNodes.forEach(search);
-        }
-    })
-}
-
-function doAfterNickNameNodeAppear(callback) {
-    let nodes = document.querySelectorAll('[class*="Nickname__Name-"]')
-    nodes.forEach((node) => {
-        callback(node)
-    })
-    newLevelsModule.observe(function search(node) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.matches('[class*="styles__Nickname-"]') || node.matches('[class*="Nickname__Name-"]')) {
-                callback(node)
-                return;
-            }
-            node.childNodes.forEach(search);
         }
     })
 }

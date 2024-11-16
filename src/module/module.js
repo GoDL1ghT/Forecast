@@ -114,6 +114,37 @@ class Module {
         });
     }
 
+    async  doAfterNodeAppear(selector, callback) {
+        let element = document.querySelector(selector);
+        if (element) await callback(element)
+        this.observe(async () => {
+            let element = document.querySelector(selector);
+            if (element) await callback(element);
+        });
+    }
+
+    async doAfterAllNodeAppear(selector, callback) {
+        let elements = document.querySelectorAll(selector);
+        if (elements.length !== 0) for (const element of elements) {
+            await callback(element);
+        }
+        this.observe(async () => {
+            let elements = document.querySelectorAll(selector);
+            for (const element of elements) {
+                if (element) await callback(element);
+            }
+        });
+    }
+
+    async doAfterAllNodeAppearPack(selector, callback) {
+        let elements = document.querySelectorAll(selector);
+        if (elements.length !== 0) await callback(elements)
+        this.observe(async () => {
+            let elements = document.querySelectorAll(selector);
+            if (elements.length !== 0) await callback(elements);
+        });
+    }
+
     async report(state) {
         await chrome.runtime.sendMessage({module: `${this.tabId}-${this.name}`, state: state})
     }

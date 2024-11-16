@@ -22,10 +22,7 @@ class TeamWinRateCalculator {
     }
 
     insertHtmlToTeamCard(url, targetElement) {
-        let htmlResource = getHtmlResource(url).cloneNode(true)
-        const firstChildWithClass = targetElement.querySelector('[class]');
-        firstChildWithClass.insertAdjacentElement('afterend', htmlResource);
-        matchRoomModule.removalNode(htmlResource);
+
     }
 
     insertHtmlToPlayerCard(filePath, playerId, targetNode) {
@@ -37,12 +34,7 @@ class TeamWinRateCalculator {
     }
 
     async printResults(targetNode) {
-        let innerNode = targetNode.querySelector('[class*="Overview__Stack"]')
-        this.insertHtmlToTeamCard('src/visual/tables/team.html', innerNode);
-        this.results.forEach((teamMap, teamName) => {
-            const teamMatches = this.aggregateTeamMatches(teamMap);
-            this.printTeamMatches(teamName, teamMatches);
-        });
+
     }
 
     aggregateTeamMatches(teamMap) {
@@ -194,27 +186,27 @@ class TeamWinRateCalculator {
 
         await Promise.all([...team1Promises, ...team2Promises]);
 
-        const element = document.querySelector(`[name="info"][class*="Overview__Column"]`);
-        if (element) await handleInfoNode(this, element);
+        matchRoomModule.doAfterNodeAppear('[name="info"][class*="Overview__Column"]',async (node) => {
+            let uniqueCheck = () => node.querySelector('[id*="team-table"]')
+            if (uniqueCheck()) return
+            const targetNode = node.matches('[name="info"]') ? node : node.querySelector('[name="info"][class*="Overview__Column"]');
+            if (!targetNode) return false;
+            if (targetNode.hasAttribute('data-processed')) return false;
+            matchRoomModule.processedNode(targetNode);
 
-        let found = !!document.getElementById("team-table")
+            let innerNode = targetNode.querySelector('[class*="Overview__Stack"]')
+            let htmlResource = getHtmlResource('src/visual/tables/team.html').cloneNode(true)
+            htmlResource.id = "team-table"
+            const firstChildWithClass = innerNode.querySelector('[class]');
+            firstChildWithClass.insertAdjacentElement('afterend', htmlResource);
+            matchRoomModule.removalNode(htmlResource);
 
-        matchRoomModule.observe(async (node) => {
-            if (found) return
-            if (node.nodeType !== Node.ELEMENT_NODE) return;
-            if (!await handleInfoNode(this, node)) return;
-            found = true;
+            this.results.forEach((teamMap, teamName) => {
+                const teamMatches = this.aggregateTeamMatches(teamMap);
+                this.printTeamMatches(teamName, teamMatches);
+            });
         })
     }
-}
-
-async function handleInfoNode(calculator, node) {
-    const targetNode = node.matches('[name="info"]') ? node : node.querySelector('[name="info"][class*="Overview__Column"]');
-    if (!targetNode) return false;
-    if (targetNode.hasAttribute('data-processed')) return false;
-    matchRoomModule.processedNode(targetNode);
-    await calculator.printResults(targetNode);
-    return true
 }
 
 function addTableTeamTitle(roster, title) {
