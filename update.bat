@@ -15,7 +15,6 @@ curl -L -o src\faceit\ranking\ranking.js %BASE_URL%/src/faceit/ranking/ranking.j
 curl -L -o src\faceit\resources\resources.js %BASE_URL%/src/faceit/resources/resources.js
 curl -L -o src\faceit\room\matchroom.js %BASE_URL%/src/faceit/room/matchroom.js
 curl -L -o src\icons\logo.png %BASE_URL%/src/icons/logo.png
-curl -L -o src\listener\background.js %BASE_URL%/src/listener/background.js
 curl -L -o src\module\module.js %BASE_URL%/src/module/module.js
 curl -L -o src\utils\utils.js %BASE_URL%/src/utils/utils.js
 curl -L -o src\visual\tables\levels\level1.html %BASE_URL%/src/visual/tables/levels/level1.html

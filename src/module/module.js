@@ -76,9 +76,10 @@ class Module {
 
     doAfter(conditionFn, callback, interval = 50) {
         const task = this.every(interval, async () => {
-            if (conditionFn()) {
+            let conditionResult = conditionFn()
+            if (conditionResult) {
                 task()
-                await callback();
+                await callback(conditionResult);
             }
         })
 
@@ -145,23 +146,16 @@ class Module {
         });
     }
 
-    async report(state) {
-        await chrome.runtime.sendMessage({module: `${this.tabId}-${this.name}`, state: state})
-    }
-
     async produceOf(action) {
         switch (action) {
             case "load":
                 await this.#load();
-                await this.report("loaded");
                 break;
             case "reload":
                 await this.#reload();
-                await this.report("loaded");
                 break;
             case "unload":
                 await this.#unload();
-                await this.report("unloaded");
                 break;
             default:
                 println("Unknown action:", action);

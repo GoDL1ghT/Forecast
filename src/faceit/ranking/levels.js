@@ -103,12 +103,12 @@ const newLevelsModule = new Module("levels", async () => {
     await newLevelsModule.doAfterNodeAppear('#main-header-height-wrapper div[class*="styles__ProfileContainer"]', async (element) => {
         let uniqueCheck = () => element.parentElement.querySelector('[id*="statistic-progress-bar"]')
         if (!uniqueCheck()) {
-            newLevelsModule.doAfter(() => element.querySelector('[class*="styles__NicknameText-"]'), async () => {
+            newLevelsModule.doAfter(() => element.querySelector('[class*="styles__NicknameText-"]'), async (result) => {
                 if (uniqueCheck()) return
-                let nick = element.querySelector('[class*="styles__NicknameText-"]').innerText
+                let nick = result.innerText
                 let newNode = document.createElement("div")
-                let result = element.parentElement
-                result.children[1].insertAdjacentElement("afterend", newNode)
+                let parent = element.parentElement
+                parent.children[1].insertAdjacentElement("afterend", newNode)
                 let newTable = getHtmlResource("src/visual/tables/elo-progress-bar.html").cloneNode(true)
                 newTable.id = "statistic-progress-bar"
                 newTable.appendToAndHide(newNode)
@@ -116,19 +116,20 @@ const newLevelsModule = new Module("levels", async () => {
                 await insertStatsToEloBar(nick)
             })
         }
-        if (element.parentElement.hasAttribute("data-repeek-level-progress")) {
-            newLevelsModule.doAfter(() => element.querySelector('[class*="styles__NicknameText-"]'), async () => {
-                let nick = element.querySelector('[class*="styles__NicknameText-"]').innerText
-                removeIfRepeekBarAppear(nick)
-            })
-        }
     })
 
-    // newLevelsModule.doAfterNodeAppear('[class*="EloWidget__Holder-"]', (node) => {
-    //     let nodeToRemove = node.parentNode.parentNode
-    //     nodeToRemove.parentNode.id = "edited-widget"
-    //     hideNode(nodeToRemove)
-    // })
+    await newLevelsModule.doAfterNodeAppear('[data-repeek-level-progress]:not([id*="content-grid-element"])', async (element) => {
+        let uniqueCheck = () => element.hasAttribute("removed-data-repeek-level-progress")
+        if (uniqueCheck()) return
+        element.setAttribute("removed-data-repeek-level-progress","")
+        let repeekBar = element.querySelector('a[href]:not([id="user-url"])')
+        hideNode(repeekBar)
+        newLevelsModule.every(100, () => {
+            if (repeekBar.style.display !== "none") {
+                hideNode(repeekBar)
+            }
+        })
+    })
 
     const defineUrlType = (url) => {
         switch (true) {
@@ -162,10 +163,9 @@ const newLevelsModule = new Module("levels", async () => {
             newLevelsModule.doAfter(() => playerCardNodes.length === 3, () => {
                 if (uniqueCheck()) return
                 let section = playerCardNodes[playerCardNodes.length - 1].firstChild
-                newLevelsModule.doAfter(() => section.querySelector("[class*=SkillIcon__StyledSvg]") || section.querySelector("[class*=BadgeHolder__Holder]"), () => {
+                newLevelsModule.doAfter(() => section.querySelector("[class*=SkillIcon__StyledSvg]") || section.querySelector("[class*=BadgeHolder__Holder]"), (oldIcon) => {
                     if (uniqueCheck()) return
                     let newIcon = levelIcons.get(currentLevel).cloneNode(true).firstChild
-                    let oldIcon = section.querySelector("[class*=SkillIcon__StyledSvg]") || section.querySelector("[class*=BadgeHolder__Holder]");
                     if (typeof oldIcon.className === "string" && oldIcon.className.includes("BadgeHolder__Holder")) {
                         newIcon.appendTo(oldIcon)
                     } else {
@@ -308,9 +308,8 @@ const newLevelsModule = new Module("levels", async () => {
             if (uniqueCheck()) return
             let eloText = node.innerText
             let elo = parseInt(eloText.replace(/[\s,._]/g, ''), 10)
-            newLevelsModule.doAfter(() => node.parentElement.querySelector('svg'), () => {
+            newLevelsModule.doAfter(() => node.parentElement.querySelector('svg'), (oldIcon) => {
                 if (uniqueCheck()) return
-                let oldIcon = node.parentElement.querySelector('svg')
                 let currentLevel = getLevel(elo, "cs2");
                 let newIcon = levelIcons.get(currentLevel).cloneNode(true)
                 let innerNewIcon = newIcon.firstElementChild;
@@ -329,8 +328,7 @@ const newLevelsModule = new Module("levels", async () => {
                 if (currentNode.tagName === "SPAN" && i === 0) break
             }
             let nick = currentNode?.innerText;
-            newLevelsModule.doAfter(() => Array.from(node?.childNodes[2]?.firstElementChild?.childNodes).some(node => node.tagName === "svg"), async () => {
-                let oldIcon = Array.from(node.childNodes[2].firstElementChild.childNodes).find(node => node.tagName === "svg")
+            newLevelsModule.doAfter(() => Array.from(node?.childNodes[2]?.firstElementChild?.childNodes).find(node => node.tagName === "svg"), async (oldIcon) => {
                 let playerStatistic = await getPlayerStatsByNickName(nick);
                 let {gameStats, gameType} = getStatistic(playerStatistic)
                 if (!gameStats) return
@@ -412,23 +410,6 @@ function doAfterSearchPlayerNodeAppear(callback) {
                 return;
             }
             node.childNodes.forEach(search);
-        }
-    })
-}
-
-function removeIfRepeekBarAppear(nick) {
-    const targetHrefPattern = new RegExp(`^/${extractLanguage()}/players/${nick}/stats/`);
-
-    newLevelsModule.observe(function searchForRemove(node) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            const href = node.getAttribute('href');
-            const hasSvg = node.querySelector('svg');
-            let targetNode = node.parentElement
-            if (href && targetHrefPattern.test(href) && hasSvg && targetNode.id !== "user-url") {
-                hideNode(targetNode)
-                return;
-            }
-            node.childNodes.forEach(searchForRemove);
         }
     })
 }

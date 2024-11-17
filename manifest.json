@@ -8,12 +8,6 @@
     "storage",
     "tabs"
   ],
-  "background": {
-    "service_worker": "src/listener/background.js",
-    "matches": [
-      "https://www.faceit.com/*"
-    ]
-  },
   "action": {
     "default_popup": "src/visual/popup.html",
     "default_icon": "src/icons/logo.png"
@@ -33,12 +27,12 @@
         "src/utils/utils.js",
         "src/faceit/api/api.js",
         "src/module/module.js",
-
         "src/faceit/resources/resources.js",
         "src/faceit/room/matchroom.js",
         "src/faceit/history/matchhistory.js",
         "src/faceit/ranking/ranking.js",
-        "src/faceit/ranking/levels.js"
+        "src/faceit/ranking/levels.js",
+        "src/module/moduleManager.js"
       ]
     }
   ],
