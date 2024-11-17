@@ -48,9 +48,20 @@ async function loadLevelIcons() {
 }
 
 async function getHTMLCodeFromFile(filePath) {
-    const response = await fetch(chrome.runtime.getURL(filePath));
+    let url;
+
+    if (browserType === FIREFOX) {
+        url = browser.runtime.getURL(filePath);
+    } else if (browserType === CHROMIUM) {
+        url = chrome.runtime.getURL(filePath);
+    } else {
+        console.error("Unable to determine runtime environment.");
+        return null;
+    }
+
+    const response = await fetch(url);
     if (!response.ok) {
-        error(`HTTP error! Status: ${response.status}`);
+        console.error(`HTTP error! Status: ${response.status}`);
         return null;
     }
 
@@ -58,7 +69,5 @@ async function getHTMLCodeFromFile(filePath) {
 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlContent;
-    return tempDiv
+    return tempDiv;
 }
-
-moduleListener(resourcesModule)

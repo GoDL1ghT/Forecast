@@ -119,12 +119,11 @@ const newLevelsModule = new Module("levels", async () => {
     })
 
     await newLevelsModule.doAfterNodeAppear('[data-repeek-level-progress]:not([id*="content-grid-element"])', async (element) => {
-        let uniqueCheck = () => element.hasAttribute("removed-data-repeek-level-progress")
+        let uniqueCheck = () => element.hasAttribute("data-processed")
         if (uniqueCheck()) return
-        element.setAttribute("removed-data-repeek-level-progress","")
-        let repeekBar = element.querySelector('a[href]:not([id="user-url"])')
-        hideNode(repeekBar)
+        newLevelsModule.processedNode(element)
         newLevelsModule.every(100, () => {
+            let repeekBar = element.querySelector('a[href]:not([id="user-url"])')
             if (repeekBar.style.display !== "none") {
                 hideNode(repeekBar)
             }
@@ -414,4 +413,3 @@ function doAfterSearchPlayerNodeAppear(callback) {
     })
 }
 
-moduleListener(newLevelsModule);

@@ -61,20 +61,17 @@ class MatchNodeByMatchStats {
         if (matchNumber % 20 !== 0) return
         const arrow = getHtmlResource("src/visual/tables/match-counter-arrow.html").cloneNode(true);
         for (let child of this.node.children) {
-            // Добавляем псевдо-элемент для каждого дочернего элемента
-            child.style.position = "relative";  // Убедитесь, что у элемента есть относительное позиционирование
-            child.style.paddingBottom = "1px";  // Добавляем пространство для псевдо-элемента
+            child.style.position = "relative";
+            child.style.paddingBottom = "1px";
 
-            // Создаем и добавляем псевдо-элемент с бордером
             const borderElement = document.createElement("div");
             borderElement.style.position = "absolute";
-            borderElement.style.bottom = "-1px";  // Сдвигаем на 1px ниже
+            borderElement.style.bottom = "-1px";
             borderElement.style.left = "0";
             borderElement.style.width = "100%";
             borderElement.style.height = "1px";
-            borderElement.style.backgroundColor = "rgb(255, 85, 0)";  // Цвет бордера
+            borderElement.style.backgroundColor = "rgb(255, 85, 0)";
 
-            // Добавляем псевдо-элемент в дочерний элемент
             child.appendChild(borderElement);
         }
 
@@ -212,5 +209,3 @@ function findPlayerInTeamById(teams, playerId) {
     }
     return {};
 }
-
-moduleListener(matchHistoryModule);

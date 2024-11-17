@@ -201,5 +201,3 @@ function doAfterStatisticNodeAppear(callback) {
         })
     }
 }
-
-moduleListener(rankingModule);

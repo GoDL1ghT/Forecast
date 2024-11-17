@@ -14,15 +14,9 @@ const matchRoomModule = new Module("matchroom", async () => {
     }
 })
 
-moduleListener(matchRoomModule);
-
 class TeamWinRateCalculator {
     constructor() {
         this.results = new Map();
-    }
-
-    insertHtmlToTeamCard(url, targetElement) {
-
     }
 
     insertHtmlToPlayerCard(filePath, playerId, targetNode) {
@@ -31,10 +25,6 @@ class TeamWinRateCalculator {
         let table = document.getElementById("player-table")
         table.id = `player-table-${playerId}`
         table.closest(`[class*="UserCardPopup__UserCardContainer"]`).style.minHeight = "530px"
-    }
-
-    async printResults(targetNode) {
-
     }
 
     aggregateTeamMatches(teamMap) {
@@ -197,6 +187,11 @@ class TeamWinRateCalculator {
             let innerNode = targetNode.querySelector('[class*="Overview__Stack"]')
             let htmlResource = getHtmlResource('src/visual/tables/team.html').cloneNode(true)
             htmlResource.id = "team-table"
+            if (browserType === CHROMIUM) {
+                let styleElement = htmlResource.querySelector('style');
+                let currentStyles = styleElement.innerHTML;
+                styleElement.innerHTML = currentStyles.replace('padding: 5px 3px;', 'padding: 10px;');
+            }
             const firstChildWithClass = innerNode.querySelector('[class]');
             firstChildWithClass.insertAdjacentElement('afterend', htmlResource);
             matchRoomModule.removalNode(htmlResource);

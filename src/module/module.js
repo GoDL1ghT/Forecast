@@ -162,14 +162,3 @@ class Module {
         }
     }
 }
-
-function moduleListener(module) {
-    chrome.runtime.onMessage.addListener(async (request) => {
-        if (request.module !== module.name) return;
-
-        if (request.action) {
-            module.tabId = request.tabId
-            await module.produceOf(request.action);
-        }
-    });
-}

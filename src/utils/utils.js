@@ -1,5 +1,10 @@
 const prefix = "[FORECAST]"
 
+const FIREFOX = "FIREFOX"
+const CHROMIUM = "CHROMIUM"
+
+const browserType = typeof browser !== 'undefined' ? FIREFOX : CHROMIUM
+
 function println(...args) {
     console.log('%c[%cFORE%cCAST%c]:', 'color: white; background-color: black;', 'color: orange; font-weight: bold; background-color: black;', 'color: white; font-weight: bold; background-color: black;', 'color: white; background-color: black;', args.join(" "));
 }
@@ -10,7 +15,7 @@ function error(...args) {
 
 function hideNode(node) {
     node.style.display = 'none';
-    node.setAttribute("hided", "true")
+    node.setAttribute("hided", "true");
 }
 
 Element.prototype.appendTo = function (node) {
@@ -24,9 +29,12 @@ Element.prototype.appendToAndHide = function (node) {
 
 async function getSliderValue() {
     return new Promise((resolve, reject) => {
-        chrome.storage.sync.get(['sliderValue'], (result) => {
-            if (chrome.runtime.lastError) {
-                reject(new Error(chrome.runtime.lastError));
+        const storageAPI = browserType === FIREFOX ? browser.storage.sync : chrome.storage.sync;
+
+        storageAPI.get(['sliderValue'], (result) => {
+            const errorMessage = browserType === FIREFOX ? browser.runtime.lastError : chrome.runtime.lastError;
+            if (errorMessage) {
+                reject(new Error(errorMessage));
             } else {
                 const sliderValue = result.sliderValue !== undefined ? result.sliderValue : 20;
                 resolve(sliderValue);
@@ -36,12 +44,34 @@ async function getSliderValue() {
 }
 
 async function isSettingEnabled(name) {
-    const settings = await chrome.storage.sync.get([name]);
+    const storageAPI = browserType === FIREFOX ? browser.storage.sync : chrome.storage.sync;
+    const settings = await new Promise((resolve, reject) => {
+        storageAPI.get([name], (result) => {
+            const errorMessage = browserType === FIREFOX ? browser.runtime.lastError : chrome.runtime.lastError;
+            if (errorMessage) {
+                reject(new Error(errorMessage));
+            } else {
+                resolve(result);
+            }
+        });
+    });
+
     return settings[name] !== undefined ? settings[name] : true;
 }
 
 async function isExtensionEnabled() {
-    const settings = await chrome.storage.sync.get(['isEnabled']);
+    const storageAPI = browserType === FIREFOX ? browser.storage.sync : chrome.storage.sync;
+    const settings = await new Promise((resolve, reject) => {
+        storageAPI.get(['isEnabled'], (result) => {
+            const errorMessage = browserType === FIREFOX ? browser.runtime.lastError : chrome.runtime.lastError;
+            if (errorMessage) {
+                reject(new Error(errorMessage));
+            } else {
+                resolve(result);
+            }
+        });
+    });
+
     return settings.isEnabled !== undefined ? settings.isEnabled : true;
 }
 

@@ -53,10 +53,22 @@ h1 {
     border-bottom: 1px solid #444;
 }
 
-label {
+label, a {
     font-size: 16px;
     flex-shrink: 0;
     margin-right: 10px;
+}
+
+a {
+    color: #ff5500;
+    text-decoration: none;
+}
+
+a:visited,
+a:hover,
+a:active {
+    color: #ff5500;
+    text-decoration: none;
 }
 
 input[type="text"] {
