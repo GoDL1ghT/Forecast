@@ -37,10 +37,9 @@ This project is a browser extension that retrieves and displays statistics for F
 
 ![image](https://github.com/user-attachments/assets/05492a4e-ccf8-4df4-8a9d-57c5211d44b0)
 
-![image](https://github.com/user-attachments/assets/396e5e19-c9a2-4f72-b5b1-255a1812329c)
-
-![image](https://github.com/user-attachments/assets/fd93fe4b-97a3-46d0-8df5-8fedea0a3386) ![image](https://github.com/user-attachments/assets/0db7ad7e-0a8c-4fd1-b870-edbb106c541d)
-![image](https://github.com/user-attachments/assets/86f72b33-38c7-4546-a7e0-2fb580dccec1) ![image](https://github.com/user-attachments/assets/338d6331-06f7-42d7-a50e-cc9da99def37)
+![image](https://github.com/user-attachments/assets/396e5e19-c9a2-4f72-b5b1-255a1812329c)![image](https://github.com/user-attachments/assets/0db7ad7e-0a8c-4fd1-b870-edbb106c541d)
+![image](https://github.com/user-attachments/assets/fd93fe4b-97a3-46d0-8df5-8fedea0a3386)
+![image](https://github.com/user-attachments/assets/86f72b33-38c7-4546-a7e0-2fb580dccec1)![image](https://github.com/user-attachments/assets/338d6331-06f7-42d7-a50e-cc9da99def37)
 
 ## License
 
