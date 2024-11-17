@@ -41,7 +41,7 @@ curl -L -o src\visual\tables\elo-progress-bar.html %BASE_URL%/src/visual/tables/
 curl -L -o src\visual\tables\level-progress-table.html %BASE_URL%/src/visual/tables/level-progress-table.html
 curl -L -o src\visual\tables\matchscore.html %BASE_URL%/src/visual/tables/matchscore.html
 curl -L -o src\visual\tables\player.html %BASE_URL%/src/visual/tables/player.html
-curl -L -o src\visual\tables\player.html %BASE_URL%/src/visual/tables/match-counter-arrow.html
+curl -L -o src\visual\tables\match-counter-arrow.html %BASE_URL%/src/visual/tables/match-counter-arrow.html
 curl -L -o src\visual\tables\team.html %BASE_URL%/src/visual/tables/team.html
 curl -L -o src\visual\popup.html %BASE_URL%/src/visual/popup.html
 curl -L -o src\visual\popup.js %BASE_URL%/src/visual/popup.js
