@@ -123,7 +123,7 @@ const newLevelsModule = new Module("levels", async () => {
         if (uniqueCheck()) return
         newLevelsModule.processedNode(element)
         newLevelsModule.every(100, () => {
-            let repeekBar = element.querySelector('a[href]:not([id="user-url"])')
+            let repeekBar = element.querySelector('a[href]:not([id="user-url"],[type="primary"])')
             if (repeekBar.style.display !== "none") {
                 hideNode(repeekBar)
             }
