@@ -4,10 +4,7 @@
   "version": "1.3",
   "description": "A convenient extension for detailed statistics on Faceit.",
   "default_locale": "en",
-  "permissions": [
-    "storage",
-    "tabs"
-  ],
+  "permissions": ["storage"],
   "action": {
     "default_popup": "src/visual/popup.html",
     "default_icon": "src/icons/logo.png"
