@@ -29,7 +29,7 @@ This project is a browser extension that retrieves and displays statistics for F
 
 ![image](https://github.com/user-attachments/assets/8b50b0a0-7cf3-4dd9-86fa-4603f102e331)
 
-![image](https://github.com/user-attachments/assets/af8d01c2-cadb-416a-8315-20d9ac7edc96)
+![image](https://github.com/user-attachments/assets/d5365846-14bd-4e81-b81b-39fb3d74f8bf)
 
 ![image](https://github.com/user-attachments/assets/04b92189-99ce-4244-b210-3cde13db2c27) ![image](https://github.com/user-attachments/assets/afcde6c0-bf5f-4c18-b6a2-345f571d2b98)
 
