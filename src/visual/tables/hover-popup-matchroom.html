@@ -1,0 +1,95 @@
+<style>
+    .tooltip {
+        display: flex;
+        flex-direction: row;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .scoreboard-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    .table-header {
+        background-color: rgb(31, 31, 31);
+        color: #fff;
+        text-align: center;
+    }
+
+    .table-body {
+        background-color: rgb(36, 36, 36);
+    }
+
+    .table-header .table-cell {
+        padding: 10px;
+    }
+
+    .table-header .table-cell:first-child {
+        border-top-left-radius: 8px;
+    }
+
+    .table-header .table-cell:last-child {
+        border-top-right-radius: 8px;
+    }
+
+    .table-body .table-row:last-child .table-cell:first-child {
+        border-bottom-left-radius: 8px;
+    }
+
+    .table-body .table-row:last-child .table-cell:last-child {
+        border-bottom-right-radius: 8px;
+    }
+
+    .table-row:not(.table-row:last-child) {
+        border-bottom: 1px solid rgb(48, 48, 48);
+    }
+
+    .table-cell {
+        padding: 8px;
+        text-align: center;
+    }
+</style>
+
+<div class="tooltip">
+    <table class="scoreboard-table">
+        <thead class="table-header">
+        <tr class="table-row">
+            <td class="table-cell">Nick</td>
+            <td class="table-cell">K</td>
+            <td class="table-cell">A</td>
+            <td class="table-cell">D</td>
+            <td class="table-cell">K/R</td>
+            <td class="table-cell">K/D</td>
+            <td class="table-cell">Hs</td>
+            <td class="table-cell">Hs%</td>
+            <td class="table-cell">MVPs</td>
+            <td class="table-cell">ADR</td>
+        </tr>
+        </thead>
+        <tbody class="table-body" id="team-table-popup-1">
+        </tbody>
+    </table>
+    <hr style="border: none; background-color: #ffffff; width: 5px; height: 100%; margin: 0 auto;" />
+    <table class="scoreboard-table">
+        <thead class="table-header">
+        <tr class="table-row">
+            <td class="table-cell">Nick</td>
+            <td class="table-cell">K</td>
+            <td class="table-cell">A</td>
+            <td class="table-cell">D</td>
+            <td class="table-cell">K/R</td>
+            <td class="table-cell">K/D</td>
+            <td class="table-cell">Hs</td>
+            <td class="table-cell">Hs%</td>
+            <td class="table-cell">MVPs</td>
+            <td class="table-cell">ADR</td>
+        </tr>
+        </thead>
+        <tbody class="table-body" id="team-table-popup-2">
+        </tbody>
+    </table>
+</div>

@@ -7,6 +7,8 @@ const loadingMatches = new Set();
 const nodesToBatch = [];
 const matchNodesByMatchStats = [];
 
+let historyPopup = undefined
+
 class MatchNodeByMatchStats {
     constructor(node, matchId, index) {
         this.node = node;
@@ -25,17 +27,18 @@ class MatchNodeByMatchStats {
         }
         const detailedMatchInfo = matchDetailedDatas.get(this.matchId);
         if (!detailedMatchInfo) return;
-
+        this.detailedMatchInfo = detailedMatchInfo;
         const {player: stats, team} = findPlayerInTeamById(detailedMatchInfo.rounds[0].teams, playerId);
         this.matchStats = stats?.["player_stats"];
+
         this.rounds = parseInt(detailedMatchInfo.rounds[0].round_stats["Rounds"], 10);
         this.score = detailedMatchInfo.rounds[0].round_stats["Score"].replace(/\s+/g, '');
         this.isWin = team["team_stats"]["Team Win"] === "1";
 
-        this.setupStatsToNode();
+        this.setupStatsToNode(playerId);
     }
 
-    setupStatsToNode() {
+    setupStatsToNode(playerId) {
         if (!this.matchStats) return;
         const {
             "Kills": k,
@@ -54,6 +57,8 @@ class MatchNodeByMatchStats {
 
         const rating = (0.0073 * kast + 0.3591 * parseFloat(kr) - 0.5329 * (parseInt(d, 10) / rounds) + 0.2372 * impact + 0.0032 * parseInt(adr, 10) + 0.1587).toFixed(2);
         insertStatsIntoNode(this.node, this.score, rating, k, d, kd, kr, adr, this.isWin);
+
+        historyPopup.attachToElement(this.node, this.detailedMatchInfo, playerId)
     }
 
     setupMatchCounterArrow() {
@@ -130,7 +135,7 @@ function insertRow(node, score, rating, k, d, kd, kr, adr, isWin) {
 
 const matchHistoryModule = new Module("matchhistory", async () => {
     if (!(await isExtensionEnabled()) || !(await isSettingEnabled("matchhistory"))) return;
-
+    historyPopup = new MatchroomPopup()
     const playerId = (await getPlayerStatsByNickName(extractPlayerNick())).player_id;
     matchHistoryModule.playerId = playerId;
     await loadAllPlayerMatches(playerId);
