@@ -15,10 +15,8 @@ class MatchroomPopup {
         this.activeTarget = null;
         this.isPopupVisible = false;
 
-        // Добавляем обработчик кликов по документу
         document.addEventListener("click", this.handleDocumentClick.bind(this));
 
-        // Обработчик для pop-up
         this.popupElement.addEventListener("mouseleave", this.handlePopupMouseLeave.bind(this));
     }
 
