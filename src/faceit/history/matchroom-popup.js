@@ -110,7 +110,7 @@ class MatchroomPopup {
 
         teams.forEach((team, index) => {
             const table = this.popupElement.querySelector(`#team-table-popup-${index + 1}`);
-            table.innerHTML = ""; // Clear existing content
+            table.innerHTML = "";
 
             team.forEach((playerStats) => {
                 const row = document.createElement("tr");
