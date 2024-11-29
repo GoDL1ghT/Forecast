@@ -6,7 +6,8 @@ class MatchroomPopup {
             position: "absolute",
             transition: "opacity 0.3s ease, transform 0.3s ease",
             opacity: "0",
-            pointerEvents: "none"
+            pointerEvents: "none",
+            zIndex: 3
         });
 
         document.body.appendChild(this.popupElement);
